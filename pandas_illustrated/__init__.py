@@ -20,27 +20,32 @@ def find(s, x, pos=False):
 def findall(s, x):
     return s.index[np.where(s == x)[0]]
 
-def insert(df, loc, obj, label=None):
+def insert(dst, loc, obj, label=None):
     """
     loc : int
-        Insertion index. Must verify 0 <= loc <= len(df).
+        Insertion index. Must verify 0 <= loc <= len(dst).
     obj : row or column
     index : index value (if not provided index will be reset)"""
     
-    n = len(df)
+    n = len(dst)
     if not 0 <= loc <= n:
-        raise ValueError('Must verify 0 <= loc <= len(df)')
-    if isinstance(obj, (list, tuple)):
-        df1 = pd.DataFrame([obj], columns=df.columns, 
-                           index=[0 if label is None else label])
-    elif isinstance(obj, dict):
-        df1 = pd.DataFrame(obj, 
-                           index=[0 if label is None else label])
-    elif isinstance(obj, pd.DataFrame):
-        df1 = obj
-    else:
-        raise TypeError(f'Received obj of type {type(obj)}')
+        raise ValueError('Must verify 0 <= loc <= len(dst)')
+    if isinstance(dst, pd.DataFrame):
+        if isinstance(obj, (list, tuple)):
+            dst1 = pd.DataFrame([obj], columns=dst.columns, 
+                               index=[0 if label is None else label])
+        elif isinstance(obj, dict):
+            dst1 = pd.DataFrame(obj, 
+                               index=[0 if label is None else label])
+        elif isinstance(obj, pd.DataFrame):
+            dst1 = obj
+        else:
+            raise TypeError(f'Received obj of type {type(obj)}')
+    elif isinstance(dst, pd.Series):
+        dst1 = pd.Series(obj, index=[0 if label is None else label])
+#     if loc==0:    # just for speed, not really necessary
+#         return pd.concat([dst1, dst], ignore_index=label is None)
     if loc==n:  # just for speed, not really necessary
-        return pd.concat([df, df1], ignore_index=label is None)
+        return pd.concat([dst, dst1], ignore_index=label is None)
     else:
-        return pd.concat([df[:loc], df1, df[loc:]], ignore_index=label is None)
+        return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=label is None)

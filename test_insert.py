@@ -46,7 +46,7 @@ def test3():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     with pytest.raises(ValueError) as exinfo:
         insert(df, -1, [1, 2, 3])
-    assert str(exinfo.value) == 'Must verify 0 <= loc <= len(df)'
+    assert str(exinfo.value) == 'Must verify 0 <= loc <= len(dst)'
 
 def test4():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'], index=['a', 'b'])
@@ -166,6 +166,28 @@ def test9():
                                    [ 7,  8,  9],
                                    [40, 50, 60],
                                    [70, 80, 90]]
+
+def vi(s): 
+    return s.values.tolist(), s.index.to_list()
+
+def test_series1():
+    s = pd.Series([20, 30])
+
+    assert vi(insert(s, 0, 10)) == ([10, 20, 30], [0, 1, 2])
+    assert vi(insert(s, 1, 10)) == ([20, 10, 30], [0, 1, 2])
+    assert vi(insert(s, 2, 10)) == ([20, 30, 10], [0, 1, 2])
+
+def test_series2():
+    s = pd.Series([20, 30], index=['b', 'c'])
+    
+    assert vi(insert(s, 0, 10)) == ([10, 20, 30], [0, 1, 2])
+    assert vi(insert(s, 1, 10)) == ([20, 10, 30], [0, 1, 2])
+    assert vi(insert(s, 2, 10)) == ([20, 30, 10], [0, 1, 2])
+    
+    assert vi(insert(s, 0, 10, 'a')) == ([10, 20, 30], ['a', 'b', 'c'])
+    assert vi(insert(s, 1, 10, 'a')) == ([20, 10, 30], ['b', 'a', 'c'])
+    assert vi(insert(s, 2, 10, 'a')) == ([20, 30, 10], ['b', 'c', 'a'])
+
 
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])
