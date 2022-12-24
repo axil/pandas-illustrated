@@ -4,24 +4,42 @@ import pandas as pd
 from pandas_illustrated import insert
 from numpy import inf
 
+def vi(s): 
+    return s.values.tolist(), s.index.to_list()
+
 def test1():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     row = [1, 2, 3]
     
     df1 = insert(df, 0, row)
-    assert df1.values.tolist() == [[1, 2, 3],
-                                   [4, 5, 6],
-                                   [7, 8, 9]]
+    assert vi(df1) == ([[1, 2, 3],
+                        [4, 5, 6],
+                        [7, 8, 9]], [0, 0, 1])
 
     df1 = insert(df, 1, row)
-    assert df1.values.tolist() == [[4, 5, 6],
-                                   [1, 2, 3],
-                                   [7, 8, 9]]
+    assert vi(df1) == ([[4, 5, 6],
+                        [1, 2, 3],
+                        [7, 8, 9]], [0, 0, 1])
 
     df1 = insert(df, 2, row)
-    assert df1.values.tolist() == [[4, 5, 6],
-                                   [7, 8, 9],
-                                   [1, 2, 3]]
+    assert vi(df1) == ([[4, 5, 6],
+                        [7, 8, 9],
+                        [1, 2, 3]], [0, 1, 0])
+    
+    df1 = insert(df, 0, row, ignore_index=True)
+    assert vi(df1) == ([[1, 2, 3],
+                        [4, 5, 6],
+                        [7, 8, 9]], [0, 1, 2])
+
+    df1 = insert(df, 1, row, ignore_index=True)
+    assert vi(df1) == ([[4, 5, 6],
+                        [1, 2, 3],
+                        [7, 8, 9]], [0, 1, 2])
+
+    df1 = insert(df, 2, row, ignore_index=True)
+    assert vi(df1) == ([[4, 5, 6],
+                        [7, 8, 9],
+                        [1, 2, 3]], [0, 1, 2])
 
 def test2():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
@@ -167,27 +185,43 @@ def test9():
                                    [40, 50, 60],
                                    [70, 80, 90]]
 
-def vi(s): 
-    return s.values.tolist(), s.index.to_list()
-
 def test_series1():
     s = pd.Series([20, 30])
 
-    assert vi(insert(s, 0, 10)) == ([10, 20, 30], [0, 1, 2])
-    assert vi(insert(s, 1, 10)) == ([20, 10, 30], [0, 1, 2])
-    assert vi(insert(s, 2, 10)) == ([20, 30, 10], [0, 1, 2])
+    assert vi(insert(s, 0, 10)) == ([10, 20, 30], [0, 0, 1])
+    assert vi(insert(s, 1, 10)) == ([20, 10, 30], [0, 0, 1])
+    assert vi(insert(s, 2, 10)) == ([20, 30, 10], [0, 1, 0])
+
+    assert vi(insert(s, 0, 10, ignore_index=True)) == ([10, 20, 30], [0, 1, 2])
+    assert vi(insert(s, 1, 10, ignore_index=True)) == ([20, 10, 30], [0, 1, 2])
+    assert vi(insert(s, 2, 10, ignore_index=True)) == ([20, 30, 10], [0, 1, 2])
 
 def test_series2():
     s = pd.Series([20, 30], index=['b', 'c'])
     
-    assert vi(insert(s, 0, 10)) == ([10, 20, 30], [0, 1, 2])
-    assert vi(insert(s, 1, 10)) == ([20, 10, 30], [0, 1, 2])
-    assert vi(insert(s, 2, 10)) == ([20, 30, 10], [0, 1, 2])
-    
     assert vi(insert(s, 0, 10, 'a')) == ([10, 20, 30], ['a', 'b', 'c'])
     assert vi(insert(s, 1, 10, 'a')) == ([20, 10, 30], ['b', 'a', 'c'])
     assert vi(insert(s, 2, 10, 'a')) == ([20, 30, 10], ['b', 'c', 'a'])
+    
+    assert vi(insert(s, 0, 10, ignore_index=True)) == ([10, 20, 30], [0, 1, 2])
+    assert vi(insert(s, 1, 10, ignore_index=True)) == ([20, 10, 30], [0, 1, 2])
+    assert vi(insert(s, 2, 10, ignore_index=True)) == ([20, 30, 10], [0, 1, 2])
 
+    assert vi(insert(s, 0, 10)) == ([10, 20, 30], [0, 'b', 'c'])
+    assert vi(insert(s, 1, 10)) == ([20, 10, 30], ['b', 0, 'c'])
+    assert vi(insert(s, 2, 10)) == ([20, 30, 10], ['b', 'c', 0])
+    
+def test_series3():
+    s = pd.Series([20, 30], index=['b', 'c'])
+    s1 = pd.Series([11, 12], index=['x', 'y'])
+
+    assert vi(insert(s, 0, s1)) == ([11, 12, 20, 30], ['x', 'y', 'b', 'c'])
+    assert vi(insert(s, 1, s1)) == ([20, 11, 12, 30], ['b', 'x', 'y', 'c'])
+    assert vi(insert(s, 2, s1)) == ([20, 30, 11, 12], ['b', 'c', 'x', 'y'])
+
+    assert vi(insert(s, 0, s1, ignore_index=True)) == ([11, 12, 20, 30], [0, 1, 2, 3])
+    assert vi(insert(s, 1, s1, ignore_index=True)) == ([20, 11, 12, 30], [0, 1, 2, 3])
+    assert vi(insert(s, 2, s1, ignore_index=True)) == ([20, 30, 11, 12], [0, 1, 2, 3])
 
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])

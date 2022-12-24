@@ -20,7 +20,7 @@ def find(s, x, pos=False):
 def findall(s, x):
     return s.index[np.where(s == x)[0]]
 
-def insert(dst, loc, obj, label=None):
+def insert(dst, loc, obj, label=None, ignore_index=False):
     """
     loc : int
         Insertion index. Must verify 0 <= loc <= len(dst).
@@ -42,10 +42,13 @@ def insert(dst, loc, obj, label=None):
         else:
             raise TypeError(f'Received obj of type {type(obj)}')
     elif isinstance(dst, pd.Series):
-        dst1 = pd.Series(obj, index=[0 if label is None else label])
+        if isinstance(obj, pd.Series):
+            dst1 = obj
+        else:
+            dst1 = pd.Series(obj, index=[0 if label is None else label])
 #     if loc==0:    # just for speed, not really necessary
 #         return pd.concat([dst1, dst], ignore_index=label is None)
     if loc==n:  # just for speed, not really necessary
-        return pd.concat([dst, dst1], ignore_index=label is None)
+        return pd.concat([dst, dst1], ignore_index=ignore_index)
     else:
-        return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=label is None)
+        return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=ignore_index)
