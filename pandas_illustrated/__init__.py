@@ -20,25 +20,27 @@ def find(s, x, pos=False):
 def findall(s, x):
     return s.index[np.where(s == x)[0]]
 
-def insert(df, loc, row, index=None):
+def insert(df, loc, obj, label=None):
     """
     loc : int
         Insertion index. Must verify 0 <= loc <= len(df).
-    row : list, tuple or dict
+    obj : row or column
     index : index value (if not provided index will be reset)"""
     
     n = len(df)
     if not 0 <= loc <= n:
         raise ValueError('Must verify 0 <= loc <= len(df)')
-    if isinstance(row, (list, tuple)):
-        df1 = pd.DataFrame([row], columns=df.columns, 
-                           index=[0 if index is None else index])
-    elif isinstance(row, dict):
-        df1 = pd.DataFrame(row, 
-                           index=[0 if index is None else index])
-    if loc==0:    # just for speed, not really necessary
-        return pd.concat([df1, df], ignore_index=index is None)
-    elif loc==n:  # also just for speed, not really necessary
-        return pd.concat([df, df1], ignore_index=index is None)
+    if isinstance(obj, (list, tuple)):
+        df1 = pd.DataFrame([obj], columns=df.columns, 
+                           index=[0 if label is None else label])
+    elif isinstance(obj, dict):
+        df1 = pd.DataFrame(obj, 
+                           index=[0 if label is None else label])
+    elif isinstance(obj, pd.DataFrame):
+        df1 = obj
     else:
-        return pd.concat([df[:loc], df1, df[loc:]], ignore_index=index is None)
+        raise TypeError(f'Received obj of type {type(obj)}')
+    if loc==n:  # just for speed, not really necessary
+        return pd.concat([df, df1], ignore_index=label is None)
+    else:
+        return pd.concat([df[:loc], df1, df[loc:]], ignore_index=label is None)

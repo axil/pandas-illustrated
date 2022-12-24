@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 from pandas_illustrated import insert
+from numpy import inf
 
 def test1():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
@@ -96,6 +97,7 @@ def test6():
             columns=['A', 'B', 'C'], 
             index=pd.MultiIndex.from_tuples([('a', 'x'), ('a', 'y')]))
     row = [1, 2, 3]
+    
     df1 = insert(df, 0, row, ('b', 'z'))
     assert df1.index.tolist() == [('b', 'z'), ('a', 'x'), ('a', 'y')]
     
@@ -105,5 +107,65 @@ def test6():
     df1 = insert(df, 2, row, ('b', 'z'))
     assert df1.index.tolist() == [('a', 'x'), ('a', 'y'), ('b', 'z')]
 
+def test7():
+    df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
+    row = pd.DataFrame([[1, 2, 3]], columns=['A', 'B', 'C'])
+    
+    df1 = insert(df, 0, row)
+    assert df1.values.tolist() == [[1, 2, 3],
+                                   [4, 5, 6],
+                                   [7, 8, 9]]
+
+    df1 = insert(df, 1, row)
+    assert df1.values.tolist() == [[4, 5, 6],
+                                   [1, 2, 3],
+                                   [7, 8, 9]]
+
+    df1 = insert(df, 2, row)
+    assert df1.values.tolist() == [[4, 5, 6],
+                                   [7, 8, 9],
+                                   [1, 2, 3]]
+
+def test8():
+    df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
+    row = pd.DataFrame([[1, 2, 3]], columns=['B', 'C', 'D'])
+
+    df1 = insert(df, 0, row).fillna(inf)
+    assert df1.values.tolist() == [[inf, 1.0, 2.0, 3.0],
+                                   [4.0, 5.0, 6.0, inf], 
+                                   [7.0, 8.0, 9.0, inf]]
+    
+    df1 = insert(df, 1, row).fillna(inf)
+    assert df1.values.tolist() == [[4.0, 5.0, 6.0, inf], 
+                                   [inf, 1.0, 2.0, 3.0],
+                                   [7.0, 8.0, 9.0, inf]] 
+
+    df1 = insert(df, 2, row).fillna(inf)
+    assert df1.values.tolist() == [[4.0, 5.0, 6.0, inf], 
+                                   [7.0, 8.0, 9.0, inf], 
+                                   [inf, 1.0, 2.0, 3.0]]
+
+def test9():
+    df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
+    rows = pd.DataFrame([[40, 50, 60], [70, 80, 90]], columns=['A', 'B', 'C'])
+
+    df1 = insert(df, 0, rows)
+    assert df1.values.tolist() == [[40, 50, 60],
+                                   [70, 80, 90],
+                                   [ 4,  5,  6],
+                                   [ 7,  8,  9]]
+
+    df1 = insert(df, 1, rows)
+    assert df1.values.tolist() == [[ 4,  5,  6],
+                                   [40, 50, 60],
+                                   [70, 80, 90],
+                                   [ 7,  8,  9]]
+
+    df1 = insert(df, 2, rows)
+    assert df1.values.tolist() == [[ 4,  5,  6],
+                                   [ 7,  8,  9],
+                                   [40, 50, 60],
+                                   [70, 80, 90]]
+
 if __name__ == '__main__':
-    pytest.main(['-s', __file__])
+    pytest.main(['-s', __file__])  # + '::test7'])
