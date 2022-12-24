@@ -20,37 +20,48 @@ def find(s, x, pos=False):
 def findall(s, x):
     return s.index[np.where(s == x)[0]]
 
-def insert(dst, loc, obj, label=0, ignore_index=False, axis=0, allow_duplicates=None):
+def insert(dst: 'NDFrame', 
+           loc: 'int', 
+           value: 'Scalar | AnyArrayLike', 
+           label: 'Hashable' = 0, 
+           ignore_index: 'bool' = False, 
+           allow_duplicates: 'bool' = None):
     """
+    dst : 
+        Series or DataFrame to insert into.
     loc : int
         Insertion index. Must verify 0 <= loc <= len(dst).
-    obj : row or column
-    index : index value (if not provided index will be reset)"""
-    
-    if axis==1:
-        if allow_duplicates is None:
-            allow_duplicates = False
-        return dst.insert(loc, label, obj, allow_duplicates=allow_duplicates)
+    value : 
+        Row(s) to insert. 
+    label : scalar or tuple
+        Index label (use tuple for a MultiIndex label).
+    ignore_index : bool, default False
+        If True, do not use the existing index. The resulting rows will be 
+        labeled 0, ..., n - 1. This is useful if you are inserting into a
+        Series or a DataFrame which index does not have meaningful information.
+    allow_duplicates : bool, default False 
+        Check for duplicates before inserting
+    """
     
     n = len(dst)
     if not 0 <= loc <= n:
         raise ValueError('Must verify 0 <= loc <= len(dst)')
     
     if isinstance(dst, pd.DataFrame):
-        if isinstance(obj, (list, tuple)):
-            dst1 = pd.DataFrame([obj], columns=dst.columns, index=[label])
-        elif isinstance(obj, dict):
-            dst1 = pd.DataFrame(obj, index=[label])
-        elif isinstance(obj, pd.DataFrame):
-            dst1 = obj
+        if isinstance(value, (list, tuple)):
+            dst1 = pd.DataFrame([value], columns=dst.columns, index=[label])
+        elif isinstance(value, dict):
+            dst1 = pd.DataFrame(value, index=[label])
+        elif isinstance(value, pd.DataFrame):
+            dst1 = value
         else:
-            raise TypeError(f'Received obj of type {type(obj)}')
+            raise TypeError(f'Received value of type {type(value)}')
     
     elif isinstance(dst, pd.Series):
-        if isinstance(obj, pd.Series):
-            dst1 = obj
+        if isinstance(value, pd.Series):
+            dst1 = value
         else:
-            dst1 = pd.Series(obj, index=[label])
+            dst1 = pd.Series(value, index=[label])
     
     if allow_duplicates is False and len(dst.index.intersection(dst1.index)):
         raise ValueError(f'cannot insert label {label!r}, already exists; consider ignore_index=True')

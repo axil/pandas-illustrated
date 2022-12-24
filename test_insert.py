@@ -7,9 +7,6 @@ from numpy import inf
 def vi(s): 
     return s.values.tolist(), s.index.to_list()
 
-def vic(s): 
-    return s.values.tolist(), s.index.to_list(), s.columns.to_list()
-
 def test1():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     row = [1, 2, 3]
@@ -235,11 +232,6 @@ def test_allow_duplicates():
     df1 = insert(df, 0, [1, 2, 3], label=2, allow_duplicates=False)
     assert vi(df1) == ([[1, 2, 3], [4, 5, 6], [7, 8, 9]], [2, 0, 1])
 
-
-def test_inserting_columns():
-    df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
-    df1 = insert(df, 1, [1, 2], 'D', axis=1)
-    assert vic(df1) == 
 
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])
