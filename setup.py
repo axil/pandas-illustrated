@@ -14,7 +14,7 @@ setuptools.setup(
     description="Helper functions find() and findll() from Pandas Illustrated article",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=['pandas'],
+    install_requires=['pandas>=1.4.4'],       # 1.3.5 does not have NDFrameT
     packages=['pandas_illustrated'],
     classifiers=[
         "Programming Language :: Python :: 3",

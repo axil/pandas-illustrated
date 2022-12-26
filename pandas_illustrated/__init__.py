@@ -1,6 +1,14 @@
 ﻿import numpy as np
 import pandas as pd
 
+from .drop import drop
+
+__all__ = [
+    "find",
+    "findall",
+    "drop",
+]
+
 def find(s, x, pos=False):
     if len(s) < 1000:
         try:

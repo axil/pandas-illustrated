@@ -223,7 +223,6 @@ def test_series3():
     assert vi(insert(s, 1, s1, ignore_index=True)) == ([20, 11, 12, 30], [0, 1, 2, 3])
     assert vi(insert(s, 2, s1, ignore_index=True)) == ([20, 30, 11, 12], [0, 1, 2, 3])
 
-
 def test_allow_duplicates():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     with pytest.raises(ValueError) as exinfo:
@@ -231,7 +230,6 @@ def test_allow_duplicates():
     assert str(exinfo.value) == 'cannot insert label 0, already exists; consider ignore_index=True'
     df1 = insert(df, 0, [1, 2, 3], label=2, allow_duplicates=False)
     assert vi(df1) == ([[1, 2, 3], [4, 5, 6], [7, 8, 9]], [2, 0, 1])
-
 
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])
