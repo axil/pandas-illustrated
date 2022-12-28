@@ -2,6 +2,7 @@
 import pandas as pd
 
 from .drop import drop
+from .sidebyside import sidebyside
 
 __all__ = [
     "find",
