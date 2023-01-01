@@ -11,6 +11,11 @@ __all__ = [
 ]
 
 def find(s, x, pos=False):
+    """
+    Finds element x in Series s. 
+    Returns index label (default) or positional index (pos=True).
+    Raises ValueError if x is missing from s.
+    """
     if len(s) < 1000:
         try:
             idx = s.tolist().index(x)
@@ -26,8 +31,16 @@ def find(s, x, pos=False):
     else:
         return s.index[idx]
 
-def findall(s, x):
-    return s.index[np.where(s == x)[0]]
+def findall(s, x, pos=False):
+    """
+    Finds all occurrences of element x in Series s.
+    Returns a list of index labels (default) or positional indexes (pos=True).
+    """
+    idx = np.where(s == x)[0]
+    if pos:
+        return idx
+    else:
+        return s.index[idx]
 
 def insert(dst: 'NDFrame', 
            loc: 'int', 
@@ -36,6 +49,9 @@ def insert(dst: 'NDFrame',
            ignore_index: 'bool' = False, 
            allow_duplicates: 'bool' = None):
     """
+    Inserts DataFrame, Series, list, tuple or dict into DataFrame as a row.
+    Also inserts Series, list or a tuple into a Series.
+
     dst : 
         Series or DataFrame to insert into.
     loc : int
@@ -80,3 +96,45 @@ def insert(dst: 'NDFrame',
     else:
         return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=ignore_index)
 
+def join(dfs, on=None, how='left', suffixes=None):
+    """
+    Joins several dataframes. 
+
+    dfs : 
+        A list of Series or DataFrames.
+    on :
+        Specifies columns of the first frame. Other dataframes are always joined by index.
+    how : {'left', 'right', 'outer', 'inner'}, default 'left'
+        Can either be a string or a list of len(dfs)-1 strings.
+    suffixes :
+        A list of len(dfs) strings. Suffixes support is not perfect, yet covers 
+        basic use cases.
+    """
+    if len(dfs) < 2:
+        raise ValueError('Two or more dataframes expected')
+    if on is None and suffixes is None and how == 'left':
+        return dfs[0].join(dfs[1:])
+    else:
+        df = dfs[0]
+        n = len(dfs)-1
+        
+        if on is None:
+            on = [None]*n
+        elif isinstance(on, str):
+            on = [on] * n
+        elif isinstance(on, (list, tuple)) and len(on) != n:
+            raise ValueError(f'"on" is expected to be either a string or a list of length {n}')
+
+        if isinstance(how, str):
+            how = [how] * n
+        elif isinstance(how, (list, tuple)) and len(on) != n:
+            raise ValueError(f'"how" is expected to be either a string or a list of length {n}')
+        
+        if suffixes is None:
+            suffixes=[''] * (n+1)
+        elif isinstance(suffixes, (list, tuple)) and len(suffixes) != n+1:
+            raise ValueError(f'"suffixes" is expected to be a list of length {n+1}')
+        
+        for i, df_i in enumerate(dfs[1:]):
+            df = df.join(df_i, on=on[i], how=how[i], lsuffix=suffixes[i], rsuffix=suffixes[i+1])
+        return df
