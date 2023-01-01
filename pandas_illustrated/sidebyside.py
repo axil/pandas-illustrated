@@ -1,6 +1,14 @@
-﻿from IPython.display import display_html
+﻿import pandas as pd
+from IPython.display import display_html
 
 def sidebyside(*dfs, names=[], index=True):
+    """
+    Displays several DataFrames (or Series, or Indices) side by side.
+    Optionally display names above each.
+    Index can be omitted with index=False.
+    Eg: sidebyside(df, df1, names=['df', 'df1'], index=False)
+    """
+
     def to_df(x):
         if isinstance(x, pd.Series):
             return x.to_frame()

@@ -79,3 +79,4 @@ def insert(dst: 'NDFrame',
         return pd.concat([dst, dst1], ignore_index=ignore_index)
     else:
         return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=ignore_index)
+
