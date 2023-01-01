@@ -47,6 +47,9 @@ def test_strings():
     assert find(s, 'cat') == 2
     assert find(s, 'cat', pos=True) == 1
 
+    assert findall(s, 'cat').tolist() == [2, 4]
+    assert findall(s, 'cat', pos=True).tolist() == [1, 3]
+
     x = 'butterfly'
     with pytest.raises(ValueError) as exinfo:
         find(s, x)
@@ -56,6 +59,7 @@ def test_strings():
     with pytest.raises(ValueError) as exinfo:
         find(s, x, pos=True)
     assert str(exinfo.value) == f'{x!r} is not in Series'
+
 
 if __name__ == '__main__':
     pytest.main(['-s', __file__])
