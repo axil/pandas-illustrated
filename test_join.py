@@ -1,7 +1,7 @@
 ﻿import pytest
 import numpy as np
-import pandas as pd
 from numpy import inf
+import pandas as pd
 
 from pdi import join
 

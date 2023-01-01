@@ -1,9 +1,10 @@
 import pytest
 import numpy as np
+from numpy import inf
 import pandas as pd
 from pandas._typing import NDFrameT
-from pandas_illustrated import drop
-from numpy import inf
+
+from pdi import drop
 
 def vi(s): 
     return s.values.tolist(), s.index.to_list()

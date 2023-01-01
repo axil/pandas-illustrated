@@ -1,8 +1,8 @@
 ﻿import pytest
 import numpy as np
-import pandas as pd
-from pandas_illustrated import insert
 from numpy import inf
+import pandas as pd
+from pdi import insert
 
 def vi(s): 
     return s.values.tolist(), s.index.to_list()

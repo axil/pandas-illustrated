@@ -1,7 +1,7 @@
 ﻿import pytest
 import numpy as np
 import pandas as pd
-from pandas_illustrated import find, findall
+from pdi import find, findall
 
 def test_small():
     s = pd.Series([4, 2, 4, 6], index=['cat', 'penguin', 'dog', 'butterfly'])

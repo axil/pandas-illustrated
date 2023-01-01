@@ -10,14 +10,14 @@ setuptools.setup(
     version='0.1',
     author='Lev Maximov',
     author_email='lev.maximov@gmail.com',
-    url='https://github.com/axil/pdi',
-    description='Helper functions find() and findll() from Pandas Illustrated article',
+    url='https://github.com/axil/pandas-illustrated',
+    description='Helper functions from Pandas Illustrated article',
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=[
         'pandas>=1.4.4',     # 1.3.5 does not have NDFrameT
         'IPython'],          # for sidebyside
-    packages=['pandas_illustrated'],
+    packages=['pdi'],
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
