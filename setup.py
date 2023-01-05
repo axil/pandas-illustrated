@@ -15,7 +15,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=[
-        'pandas>=1.4.4',     # 1.3.5 does not have NDFrameT
+        'pandas>=1.4.0',     # 1.3.5 does not have NDFrameT
         'IPython'],          # for sidebyside
     packages=['pdi'],
     classifiers=[
