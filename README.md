@@ -1,4 +1,4 @@
-﻿# pandas_illustrated
+﻿# pandas-illustrated
 
 This repo contains code for `find()` and `findall()` functions that help in searching Series by value.
 Chooses optimal implementation depending on the size of the Series.
@@ -14,7 +14,7 @@ By default `find(series, value)` looks for the first occurrence of the given *va
 
 ```python
 >>> import pandas as pd
->>> import pandas_illustrated as pdi
+>>> import pdi
 
 >>> s = pd.Series([4, 2, 4, 6], index=['cat', 'penguin', 'dog', 'butterfly'])
 
