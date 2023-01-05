@@ -1,4 +1,6 @@
-﻿import re
+﻿from __future__ import annotations
+
+import re
 
 from pandas._typing import (
     ArrayLike,
@@ -20,8 +22,6 @@ from pandas._typing import (
     TimedeltaConvertibleTypes,
     TimestampConvertibleTypes,
     ValueKeyFunc,
-    WriteBuffer,
-    npt,
 )
 
 import pandas.core.common as com
