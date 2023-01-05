@@ -8,10 +8,28 @@ from pdi import join
 def vic(s): 
     return s.values.tolist(), s.index.to_list(), s.columns.to_list()
 
+def test_basic():
+    a = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
+    b = pd.DataFrame({'C': [5, 6], 'D': [7, 8]})
+
+    with pytest.raises(ValueError):
+        join([])
+    with pytest.raises(ValueError):
+        join([a])
+    assert vic(join([a,b])) == \
+        ([[1, 3, 5, 7], 
+          [2, 4, 6, 8]], [0, 1], ['A', 'B', 'C', 'D'])
+    with pytest.raises(ValueError):
+        join([a, b], on=['A', 'B'])
+    with pytest.raises(ValueError):
+        join([a, b], how=['left', 'right'])
+    with pytest.raises(ValueError):
+        join([a, b], suffixes=['_x'])
+
 def test_on():
-    a = pd.DataFrame({'A': [1,2,3], 'B': [4,5,6], 'C': [7,8,9]}, index=list('abc'))
-    b = pd.DataFrame({'A': [1,2,3], 'D': [10, 20, 30]}).set_index('A')
-    c = pd.DataFrame({'B': [4,5,6], 'E': [40, 50, 60]}).set_index('B')
+    a = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]}, index=list('abc'))
+    b = pd.DataFrame({'A': [1, 2, 3], 'D': [10, 20, 30]}).set_index('A')
+    c = pd.DataFrame({'B': [4, 5, 6], 'E': [40, 50, 60]}).set_index('B')
     assert vic(join([a, b, c], on=['A', 'B'])) == \
         ([[1, 4, 7, 10, 40], 
           [2, 5, 8, 20, 50], 

@@ -1,5 +1,13 @@
 ﻿import numpy as np
 import pandas as pd
+from typing import Hashable
+
+from pandas._typing import (
+    AnyArrayLike,
+    Scalar,
+)
+
+from pandas.core.generic import NDFrame
 
 from .drop import drop
 from .sidebyside import sidebyside
@@ -7,7 +15,10 @@ from .sidebyside import sidebyside
 __all__ = [
     "find",
     "findall",
+    "insert",
     "drop",
+    "join"
+    "sidebyside",
 ]
 
 def find(s, x, pos=False):
@@ -42,12 +53,12 @@ def findall(s, x, pos=False):
     else:
         return s.index[idx]
 
-def insert(dst: 'NDFrame', 
-           loc: 'int', 
-           value: 'Scalar | AnyArrayLike', 
-           label: 'Hashable' = 0, 
-           ignore_index: 'bool' = False, 
-           allow_duplicates: 'bool' = None):
+def insert(dst: NDFrame, 
+           loc: int, 
+           value: Scalar | AnyArrayLike, 
+           label: Hashable = 0, 
+           ignore_index: bool = False, 
+           allow_duplicates: bool = None) -> None:
     """
     Inserts DataFrame, Series, list, tuple or dict into DataFrame as a row.
     Also inserts Series, list or a tuple into a Series.
@@ -111,7 +122,7 @@ def join(dfs, on=None, how='left', suffixes=None):
         basic use cases.
     """
     if len(dfs) < 2:
-        raise ValueError('Two or more dataframes expected')
+        raise ValueError('Two or more series or dataframes expected')
     if on is None and suffixes is None and how == 'left':
         return dfs[0].join(dfs[1:])
     else:
@@ -127,7 +138,7 @@ def join(dfs, on=None, how='left', suffixes=None):
 
         if isinstance(how, str):
             how = [how] * n
-        elif isinstance(how, (list, tuple)) and len(on) != n:
+        elif isinstance(how, (list, tuple)) and len(how) != n:
             raise ValueError(f'"how" is expected to be either a string or a list of length {n}')
         
         if suffixes is None:
@@ -138,3 +149,14 @@ def join(dfs, on=None, how='left', suffixes=None):
         for i, df_i in enumerate(dfs[1:]):
             df = df.join(df_i, on=on[i], how=how[i], lsuffix=suffixes[i], rsuffix=suffixes[i+1])
         return df
+
+def patch_series():
+    def _repr_html_(s):
+        if s.name is None:
+            s = s.copy()
+            s.name = ''
+        html = s.to_frame()._repr_html_()
+        html = html.replace('<thead>', '<thead style="border-bottom-color: #42a5f5;">')  # #009dff, yellowgreen
+        return html
+
+    pd.Series._repr_html_ = _repr_html_
