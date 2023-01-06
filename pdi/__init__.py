@@ -160,13 +160,32 @@ def join(dfs, on=None, how='left', suffixes=None):
         return df
 
 
+def _fix_html(html):
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(html, 'lxml')
+    soup.tbody.find_all('th')[0].style
+    soup.thead['style'] = 'border-bottom: none;'
+    for tr in soup.tbody.find_all('tr'):
+        th = tr.find_all('th')[-1]
+        th['style'] = 'border-right: 1px solid #666;'
+#    html = html.replace('<th>', '<th style="border-right: 1px solid black;">')  # #009dff, yellowgreen
+#    html_list.append(html)
+    return str(soup.body.decode_contents())
+
 def patch_series():
     def _repr_html_(s):
         if s.name is None:
             s = s.copy()
             s.name = ''
         html = s.to_frame()._repr_html_()
-        html = html.replace('<thead>', '<thead style="border-bottom-color: #42a5f5;">')  # #009dff, yellowgreen
-        return html
+        return _fix_html(html)
+
+    def to_html(s, *args, **kwargs):
+        if s.name is None:
+            s = s.copy()
+            s.name = ''
+        html = s.to_frame().to_html(*args, **kwargs)
+        return _fix_html(html)
 
     pd.Series._repr_html_ = _repr_html_
+    pd.Series.to_html = to_html

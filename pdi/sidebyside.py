@@ -11,13 +11,17 @@ def sidebyside(*dfs, names=[], index=True):
     """
 
     def to_df(x):
-        if isinstance(x, pd.Series):
-            return x.to_frame()
+        if isinstance(x, pd.DataFrame):
+            return x
         elif isinstance(x, pd.Index):
             name = x.name if x.name is not None else 'index'
-            return pd.Series(x, name=name).to_frame()
+            x = pd.Series(x, name=name)
+
+        # x is expected to be a Series here
+        if hasattr(x, 'to_html'):
+            return x                    # series patched
         else:
-            return x
+            return x.to_frame()
 
     html_str = ''
     if names:

@@ -59,6 +59,19 @@ There's a number of ways to find index label for a given value. The most efficie
 
 `find()` chooses optimal implementation depending on the series size; `findall()` always uses the `where` implementation.
 
+## Improving Series Representation
+
+Run `pdi.patch_series()` to make Series look better.
+
+If you want to display several Series from one cell, call `display(s)`.
+
+Several Series side by side: 
+
+`pdi.sidebyside(s1, s2)` or
+
+`from pdi import sidebyside as sbs; sbs(s1, s2)`
+<img src="img/sbs.png"/>
+
 ## Testing
 
 Run `pytest` in project root.
