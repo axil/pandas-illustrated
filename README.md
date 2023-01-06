@@ -70,7 +70,8 @@ Several Series side by side:
 `pdi.sidebyside(s1, s2)` or
 
 `from pdi import sidebyside as sbs; sbs(s1, s2)`
-<img src="img/sbs.png"/>
+
+<img src="img/sbs.png" width="450"/>
 
 ## Testing
 
