@@ -2,7 +2,10 @@
 
 import re
 
-from pandas._typing import NDFrameT
+try:
+    from pandas._typing import NDFrameT
+except:         # pandas < 1.4
+    from pandas._typing import FrameOrSeries
 import pandas.core.common as com
 from pandas.core.dtypes.common import ensure_str
 
