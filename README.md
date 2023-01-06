@@ -61,15 +61,13 @@ There's a number of ways to find index label for a given value. The most efficie
 
 ## Improving Series Representation
 
-Run `pdi.patch_series()` to make Series look better.
+Run `pdi.patch_series()` to make Series look better:
 
-If you want to display several Series from one cell, call `display(s)`.
+<img src="https://user-images.githubusercontent.com/170910/211085821-544b42b0-561a-47e7-8f32-6f31a05ed978.png" width="600">
 
-Several Series side by side: 
+If you want to display several Series from one cell, call `display(s)` for each.
 
-`pdi.sidebyside(s1, s2)` or
-
-`from pdi import sidebyside as sbs; sbs(s1, s2)`
+To display several Series side by side call `pdi.sidebyside(s1, s2, ...)`
 
 <img src="img/sbs.png" width="450"/>
 
