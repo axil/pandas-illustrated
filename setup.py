@@ -16,6 +16,7 @@ setuptools.setup(
     long_description_content_type='text/markdown',
     install_requires=[
         'pandas',
+        'bs4',               # for patch_series
         'IPython'],          # for sidebyside
     packages=['pdi'],
     classifiers=[
