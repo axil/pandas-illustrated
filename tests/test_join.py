@@ -5,8 +5,10 @@ import pandas as pd
 
 from pdi import join
 
+
 def vic(s): 
     return s.values.tolist(), s.index.to_list(), s.columns.to_list()
+
 
 def test_basic():
     a = pd.DataFrame({'A': [1, 2], 'B': [3, 4]})
@@ -16,7 +18,7 @@ def test_basic():
         join([])
     with pytest.raises(ValueError):
         join([a])
-    assert vic(join([a,b])) == \
+    assert vic(join([a, b])) == \
         ([[1, 3, 5, 7], 
           [2, 4, 6, 8]], [0, 1], ['A', 'B', 'C', 'D'])
     with pytest.raises(ValueError):
@@ -26,6 +28,7 @@ def test_basic():
     with pytest.raises(ValueError):
         join([a, b], suffixes=['_x'])
 
+
 def test_on():
     a = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6], 'C': [7, 8, 9]}, index=list('abc'))
     b = pd.DataFrame({'A': [1, 2, 3], 'D': [10, 20, 30]}).set_index('A')
@@ -34,6 +37,7 @@ def test_on():
         ([[1, 4, 7, 10, 40], 
           [2, 5, 8, 20, 50], 
           [3, 6, 9, 30, 60]], ['a', 'b', 'c'], ['A', 'B', 'C', 'D', 'E'])
+
 
 def test_how():
     a = pd.DataFrame(np.arange(1, 4), columns=list('A'), index=list('abc'))
@@ -60,15 +64,16 @@ def test_how():
           [3.0, 5.0, 7.0], 
           [inf, 6.0, 8.0]], ['b', 'c', 'd'], ['A', 'B', 'C'])
 
+
 def test_suffixes():
-    a = pd.DataFrame(np.arange(1, 4), columns=list('X'), index=list('abc')); a
-    b = pd.DataFrame(np.arange(4, 7), columns=list('Y'), index=list('abc'), dtype=int); b
-    c = pd.DataFrame(np.arange(7, 10), columns=list('Y'), index=list('abc'), dtype=int); c
+    a = pd.DataFrame(np.arange(1, 4), columns=list('X'), index=list('abc'))
+    b = pd.DataFrame(np.arange(4, 7), columns=list('Y'), index=list('abc'), dtype=int)
+    c = pd.DataFrame(np.arange(7, 10), columns=list('Y'), index=list('abc'), dtype=int)
     assert vic(join([a, b, c], suffixes=['', '_b', '_c'])) == \
         ([[1, 4, 7], 
           [2, 5, 8], 
           [3, 6, 9]], ['a', 'b', 'c'], ['X', 'Y_b', 'Y_c'])
 
+
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])
-

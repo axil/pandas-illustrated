@@ -2,7 +2,7 @@
 
 import numpy as np
 import pandas as pd
-from typing import Hashable
+from typing import Hashable, Sequence
 
 from pandas._typing import (
     AnyArrayLike,
@@ -19,9 +19,10 @@ __all__ = [
     "findall",
     "insert",
     "drop",
-    "join"
+    "join",
     "sidebyside",
 ]
+
 
 def find(s, x, pos=False):
     """
@@ -44,6 +45,7 @@ def find(s, x, pos=False):
     else:
         return s.index[idx]
 
+
 def findall(s, x, pos=False):
     """
     Finds all occurrences of element x in Series s.
@@ -55,12 +57,13 @@ def findall(s, x, pos=False):
     else:
         return s.index[idx]
 
+
 def insert(dst: NDFrame, 
            loc: int, 
-           value: Scalar | AnyArrayLike, 
+           value: Scalar | AnyArrayLike | Sequence,
            label: Hashable = 0, 
            ignore_index: bool = False, 
-           allow_duplicates: bool = None) -> None:
+           allow_duplicates: bool = None) -> NDFrame:
     """
     Inserts DataFrame, Series, list, tuple or dict into DataFrame as a row.
     Also inserts Series, list or a tuple into a Series.
@@ -100,14 +103,18 @@ def insert(dst: NDFrame,
             dst1 = value
         else:
             dst1 = pd.Series(value, index=[label])
+
+    else:
+        raise TypeError(f'Supported dst types are: DataFrame, Series. Got type {type(dst)}')
     
     if allow_duplicates is False and len(dst.index.intersection(dst1.index)):
         raise ValueError(f'cannot insert label {label!r}, already exists; consider ignore_index=True')
 
-    if loc==n:  # just for speed, not really necessary
+    if loc == n:  # just for speed, not really necessary
         return pd.concat([dst, dst1], ignore_index=ignore_index)
     else:
         return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=ignore_index)
+
 
 def join(dfs, on=None, how='left', suffixes=None):
     """
@@ -144,13 +151,14 @@ def join(dfs, on=None, how='left', suffixes=None):
             raise ValueError(f'"how" is expected to be either a string or a list of length {n}')
         
         if suffixes is None:
-            suffixes=[''] * (n+1)
+            suffixes = [''] * (n+1)
         elif isinstance(suffixes, (list, tuple)) and len(suffixes) != n+1:
             raise ValueError(f'"suffixes" is expected to be a list of length {n+1}')
         
         for i, df_i in enumerate(dfs[1:]):
             df = df.join(df_i, on=on[i], how=how[i], lsuffix=suffixes[i], rsuffix=suffixes[i+1])
         return df
+
 
 def patch_series():
     def _repr_html_(s):

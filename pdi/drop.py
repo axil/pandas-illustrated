@@ -2,60 +2,19 @@
 
 import re
 
-from pandas._typing import (
-    ArrayLike,
-    Axis,
-    CompressionOptions,
-    Dtype,
-    DtypeArg,
-    DtypeObj,
-    IndexKeyFunc,
-    IndexLabel,
-    JSONSerializable,
-    Level,
-    Manager,
-    NDFrameT,
-    RandomState,
-    Renamer,
-    StorageOptions,
-    T,
-    TimedeltaConvertibleTypes,
-    TimestampConvertibleTypes,
-    ValueKeyFunc,
-)
-
+from pandas._typing import NDFrameT
 import pandas.core.common as com
+from pandas.core.dtypes.common import ensure_str
 
 bool_t = bool  # Need alias because NDFrame has def bool:
 
-from pandas.core.dtypes.common import (
-    ensure_object,
-    ensure_platform_int,
-    ensure_str,
-    is_bool,
-    is_bool_dtype,
-    is_datetime64_any_dtype,
-    is_datetime64tz_dtype,
-    is_dict_like,
-    is_dtype_equal,
-    is_extension_array_dtype,
-    is_float,
-    is_list_like,
-    is_number,
-    is_numeric_dtype,
-    is_re_compilable,
-    is_scalar,
-    is_timedelta64_dtype,
-    pandas_dtype,
-)
 
 # the inverse of "filter"
 def _drop(obj: NDFrameT,
-        items=None,
-        like: str | None = None,
-        regex: str | None = None,
-        axis=None,
-) -> NDFrameT:
+          items=None,
+          like: str | None = None,
+          regex: str | None = None,
+          axis=None) -> NDFrameT:
     nkw = com.count_not_none(items, like, regex)
     if nkw > 1:
         raise TypeError(
@@ -88,6 +47,7 @@ def _drop(obj: NDFrameT,
         return obj.loc(axis=axis)[values]
     else:
         raise TypeError("Must pass either `items`, `like`, or `regex`")
+
 
 def drop(obj: NDFrameT, 
          index=None, index_like=None, index_re=None, 

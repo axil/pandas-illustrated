@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from pdi import find, findall
 
+
 def test_small():
     s = pd.Series([4, 2, 4, 6], index=['cat', 'penguin', 'dog', 'butterfly'])
 
@@ -19,7 +20,8 @@ def test_small():
     with pytest.raises(ValueError) as exinfo:
         find(s, 3, pos=True)
     assert str(exinfo.value) == '3 is not in Series'
-    
+
+
 def test_large():
     n = 10**4
     a = np.arange(n)
@@ -37,6 +39,7 @@ def test_large():
     with pytest.raises(ValueError) as exinfo:
         find(s, n, pos=True)
     assert str(exinfo.value) == f'{n} is not in Series'
+
 
 def test_strings():
     s = pd.Series(['dog', 'cat', 'penguin', 'cat'], index=list(range(1, 5)))

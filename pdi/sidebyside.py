@@ -1,6 +1,7 @@
 ﻿import pandas as pd
 from IPython.display import display_html
 
+
 def sidebyside(*dfs, names=[], index=True):
     """
     Displays several DataFrames (or Series, or Indices) side by side.
@@ -17,17 +18,18 @@ def sidebyside(*dfs, names=[], index=True):
             return pd.Series(x, name=name).to_frame()
         else:
             return x
+
     html_str = ''
     if names:
         html_str += (
             '<tr>' + 
-                ''.join('<td style="text-align:center; font-weight:bold">'
+                ''.join('<td style="text-align:center; font-weight:bold">'                # noqa: E131
                             f'{name}'
                         '</td>' for name in names) + 
             '</tr>')
     html_str += (
         '<tr>' + 
-            ''.join('<td style="vertical-align:top"> '
+            ''.join('<td style="vertical-align:top"> '                                    # noqa: E131
                         f'{to_df(df).to_html(index=index)}'
                     '</td>' 
                 for df in dfs) + 
