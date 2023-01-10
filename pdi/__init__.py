@@ -8,8 +8,9 @@ from pandas._typing import (
     AnyArrayLike,
     Scalar,
 )
-
 from pandas.core.generic import NDFrame
+import pandas.io.formats.format as fmt
+
 
 from .drop import drop
 from .sidebyside import sidebyside
@@ -21,6 +22,9 @@ __all__ = [
     "drop",
     "join",
     "sidebyside",
+    "patch_series",
+    "unpatch_series",
+    "patch_dataframe",
 ]
 
 
@@ -172,12 +176,20 @@ def _fix_html(html):
 #    html_list.append(html)
     return str(soup.body.decode_contents())
 
-def patch_series():
+
+def patch_series(footer=True):
+    def get_footer(s):
+        repr_params = fmt.get_series_repr_params()
+        msg = fmt.SeriesFormatter(s, **repr_params)._get_footer()
+        return f'<pre style="margin-top:3px">{msg}</pre>'
+        
     def _repr_html_(s):
         if s.name is None:
             s = s.copy()
             s.name = ''
         html = s.to_frame()._repr_html_()
+        if footer:
+            html += get_footer(s)
         return _fix_html(html)
 
     def to_html(s, *args, **kwargs):
@@ -185,7 +197,53 @@ def patch_series():
             s = s.copy()
             s.name = ''
         html = s.to_frame().to_html(*args, **kwargs)
+        if footer:
+            html += get_footer(s)
         return _fix_html(html)
 
     pd.Series._repr_html_ = _repr_html_
     pd.Series.to_html = to_html
+
+
+def unpatch_series():
+    pd.Series._repr_html_ = None
+    pd.Series.to_html = None
+
+
+class Mi:
+    def __init__(self, df):
+        self.df = df
+        
+    def __getitem__(self, args):
+        return self.df.loc[args, :]
+
+    def __call__(self, *args, **kwargs):
+        levels, keys = tuple(kwargs.keys()), tuple(kwargs.values())
+        return self.df.xs(keys, level=levels, drop_level=False)
+
+
+@property
+def get_mi(self):
+    return Mi(self)
+
+
+class Co:
+    def __init__(self, df):
+        self.df = df
+        
+    def __getitem__(self, args):
+        return self.df.loc[:, args]
+
+    def __call__(self, *args, **kwargs):
+        levels, keys = tuple(kwargs.keys()), tuple(kwargs.values())
+        return self.df.xs(keys, level=levels, drop_level=False, axis=1)
+
+
+@property
+def get_co(self):
+    return Co(self)
+
+
+def patch_dataframe():
+    pd.DataFrame.mi = get_mi
+    pd.DataFrame.co = get_co
