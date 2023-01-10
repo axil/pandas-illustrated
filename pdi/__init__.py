@@ -9,11 +9,9 @@ from pandas._typing import (
     Scalar,
 )
 from pandas.core.generic import NDFrame
-import pandas.io.formats.format as fmt
-
 
 from .drop import drop
-from .sidebyside import sidebyside
+from .visuals import patch_series, sidebyside
 
 __all__ = [
     "find",
@@ -21,9 +19,9 @@ __all__ = [
     "insert",
     "drop",
     "join",
-    "sidebyside",
     "patch_series",
     "unpatch_series",
+    "sidebyside",
     "patch_dataframe",
 ]
 
@@ -162,52 +160,6 @@ def join(dfs, on=None, how='left', suffixes=None):
         for i, df_i in enumerate(dfs[1:]):
             df = df.join(df_i, on=on[i], how=how[i], lsuffix=suffixes[i], rsuffix=suffixes[i+1])
         return df
-
-
-def _fix_html(html):
-    from bs4 import BeautifulSoup
-    soup = BeautifulSoup(html, 'lxml')
-    soup.tbody.find_all('th')[0].style
-    soup.thead['style'] = 'border-bottom: none;'
-    for tr in soup.tbody.find_all('tr'):
-        th = tr.find_all('th')[-1]
-        th['style'] = 'border-right: 1px solid #666;'
-#    html = html.replace('<th>', '<th style="border-right: 1px solid black;">')  # #009dff, yellowgreen
-#    html_list.append(html)
-    return str(soup.body.decode_contents())
-
-
-def patch_series(footer=True):
-    def get_footer(s):
-        repr_params = fmt.get_series_repr_params()
-        msg = fmt.SeriesFormatter(s, **repr_params)._get_footer()
-        return f'<pre style="margin-top:3px">{msg}</pre>'
-        
-    def _repr_html_(s):
-        if s.name is None:
-            s = s.copy()
-            s.name = ''
-        html = s.to_frame()._repr_html_()
-        if footer:
-            html += get_footer(s)
-        return _fix_html(html)
-
-    def to_html(s, *args, **kwargs):
-        if s.name is None:
-            s = s.copy()
-            s.name = ''
-        html = s.to_frame().to_html(*args, **kwargs)
-        if footer:
-            html += get_footer(s)
-        return _fix_html(html)
-
-    pd.Series._repr_html_ = _repr_html_
-    pd.Series.to_html = to_html
-
-
-def unpatch_series():
-    pd.Series._repr_html_ = None
-    pd.Series.to_html = None
 
 
 class Mi:
