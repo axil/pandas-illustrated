@@ -133,21 +133,21 @@ def _move(a, pos, val):
     return a
 
 
-def move(obj, pos, label=None, column=None, row=None, axis=None, reset_index=False):
+def move(obj, pos, label=None, column=None, index=None, axis=None, reset_index=False):
     """
     Moves DataFrame column or row or Series element to positional index 'pos'.
     One of the following formats can be used:
        — column='A'
-       — row='a'
+       — index='a'
        — label='A', axis=1         # same as column='A'
-       — label='a', axis=0         # same as row='a'  
-       — label='a'                 # for Series
+       — label='a', axis=0         # same as index='a'  
+       — label='a'                 # axis is not required for Series
     Must verify 0 <= pos <= len(columns or index)
     Renumbers the rows from 0 if drop_index is True
     For example:
        >>> move(df, 0, column='C')    # columns: 'A','B','C' -> 'C','B','A'
-       >>> move(df, 3, row='a')       # rows: 'a','b','c' -> 'b','c','a'
-       >>> move(df, 0, row=2, reset_index=True)
+       >>> move(df, 3, index='a')       # rows: 'a','b','c' -> 'b','c','a'
+       >>> move(df, 0, index=2, reset_index=True)
            A  B         A  B
         0  1  2      0  5  6
         1  3  4  ->  1  1  2
@@ -155,8 +155,8 @@ def move(obj, pos, label=None, column=None, row=None, axis=None, reset_index=Fal
 
     
     """
-    if row is not None:
-        label = row
+    if index is not None:
+        label = index
         axis = 0
     elif column is not None:
         label = column
