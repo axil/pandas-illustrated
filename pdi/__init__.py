@@ -18,6 +18,7 @@ __all__ = [
     "findall",
     "insert",
     "drop",
+    "move",
     "join",
     "patch_series",
     "unpatch_series",
@@ -118,6 +119,56 @@ def insert(dst: NDFrame,
         return pd.concat([dst, dst1], ignore_index=ignore_index)
     else:
         return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=ignore_index)
+
+
+def _move(a, pos, val):
+    a = a.copy()
+    i = a.index(val)
+    if i > pos:
+        del a[i]
+        a.insert(pos, val)
+    else:
+        a.insert(pos, val)
+        del a[i]
+    return a
+
+
+def move(obj, pos, label=None, column=None, row=None, axis=None, reset_index=False):
+    """
+    Moves DataFrame column or row or Series element to positional index 'pos'.
+    One of the following formats can be used:
+       — column='A'
+       — row='a'
+       — label='A', axis=1         # same as column='A'
+       — label='a', axis=0         # same as row='a'  
+       — label='a'                 # for Series
+    Must verify 0 <= pos <= len(columns or index)
+    Renumbers the rows from 0 if drop_index is True
+    For example:
+       >>> move(df, 0, column='C')    # columns: 'A','B','C' -> 'C','B','A'
+       >>> move(df, 3, row='a')       # rows: 'a','b','c' -> 'b','c','a'
+       >>> move(df, 0, row=2, reset_index=True)
+           A  B         A  B
+        0  1  2      0  5  6
+        1  3  4  ->  1  1  2
+        2  5  6      2  3  4
+
+    
+    """
+    if row is not None:
+        label = row
+        axis = 0
+    elif column is not None:
+        label = column
+        axis = 1
+        
+    if isinstance(obj, pd.Series) or axis in (0, 'rows'):
+        obj = obj.reindex(_move(obj.index.tolist(), pos, label))
+        if reset_index:
+            obj.reset_index(drop=True, inplace=True)
+        return obj
+    else:
+        return obj.reindex(columns=_move(obj.columns.tolist(), pos, label))
 
 
 def join(dfs, on=None, how='left', suffixes=None):
