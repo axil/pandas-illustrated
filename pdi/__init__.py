@@ -11,7 +11,7 @@ from pandas._typing import (
 from pandas.core.generic import NDFrame
 
 from .drop import drop
-from .visuals import patch_series, sidebyside
+from .visuals import patch_series, unpatch_series, sidebyside
 
 __all__ = [
     "find",

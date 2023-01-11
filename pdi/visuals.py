@@ -28,18 +28,22 @@ def patch_series(footer=True):
         
     def _repr_html_(s):
         if s.name is None:
-            s = s.copy()
-            s.name = ''
-        html = s.to_frame()._repr_html_()
+            s1 = s.copy()
+            s1.name = ''
+        else:
+            s1 = s
+        html = s1.to_frame()._repr_html_()
         if footer:
             html += get_footer(s)
         return _fix_html(html)
 
     def to_html(s, *args, **kwargs):
         if s.name is None:
-            s = s.copy()
-            s.name = ''
-        html = s.to_frame().to_html(*args, **kwargs)
+            s1 = s.copy()
+            s1.name = ''
+        else:
+            s1 = s
+        html = s1.to_frame().to_html(*args, **kwargs)
         if footer:
             html += get_footer(s)
         return _fix_html(html)
