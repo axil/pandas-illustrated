@@ -97,6 +97,8 @@ def insert(dst: NDFrame,
             dst1 = pd.DataFrame(value, index=[label])
         elif isinstance(value, pd.DataFrame):
             dst1 = value
+        elif isinstance(value, pd.Series):
+            dst1 = value.to_frame().T
         else:
             raise TypeError(f'Received value of type {type(value)}')
     

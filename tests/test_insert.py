@@ -10,6 +10,7 @@ def vi(s):
 
 
 def test1():
+    # inserting a list
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     row = [1, 2, 3]
     
@@ -45,6 +46,7 @@ def test1():
 
 
 def test2():
+    # inserting a dict
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     row = {'A': 1, 'B': 2, 'C': 3}
     
@@ -65,6 +67,7 @@ def test2():
 
 
 def test3():
+    # testing exceptions
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     with pytest.raises(ValueError) as exinfo:
         insert(df, -1, [1, 2, 3])
@@ -72,6 +75,7 @@ def test3():
 
 
 def test4():
+    # explicit row label
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'], index=['a', 'b'])
     row = [1, 2, 3]
     
@@ -95,6 +99,7 @@ def test4():
 
 
 def test5():
+    # heterogenous dtypes
     df = pd.DataFrame([[4, 5., '6'], [7, 8., '9']], columns=['A', 'B', 'C'], index=['a', 'b'])
     row = [1, 2., '3']
     
@@ -118,6 +123,7 @@ def test5():
 
 
 def test6():
+    # MultiIndex
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], 
                       columns=['A', 'B', 'C'],
                       index=pd.MultiIndex.from_tuples([('a', 'x'), ('a', 'y')]))
@@ -134,6 +140,7 @@ def test6():
 
 
 def test7():
+    # inserting DataFrame
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     row = pd.DataFrame([[1, 2, 3]], columns=['A', 'B', 'C'])
     
@@ -152,8 +159,28 @@ def test7():
                                    [7, 8, 9],
                                    [1, 2, 3]]
 
+def test7a():
+    # inserting Series
+    df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
+    row = pd.Series([1, 2, 3], index=['A', 'B', 'C'])
+    
+    df1 = insert(df, 0, row)
+    assert df1.values.tolist() == [[1, 2, 3],
+                                   [4, 5, 6],
+                                   [7, 8, 9]]
+
+    df1 = insert(df, 1, row)
+    assert df1.values.tolist() == [[4, 5, 6],
+                                   [1, 2, 3],
+                                   [7, 8, 9]]
+
+    df1 = insert(df, 2, row)
+    assert df1.values.tolist() == [[4, 5, 6],
+                                   [7, 8, 9],
+                                   [1, 2, 3]]
 
 def test8():
+    # testing alignment
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     row = pd.DataFrame([[1, 2, 3]], columns=['B', 'C', 'D'])
 
@@ -174,6 +201,7 @@ def test8():
 
 
 def test9():
+    # inserting DataFrame with several rows
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     rows = pd.DataFrame([[40, 50, 60], [70, 80, 90]], columns=['A', 'B', 'C'])
 
