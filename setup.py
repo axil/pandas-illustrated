@@ -18,7 +18,7 @@ setuptools.setup(
         'pandas',
         'bs4',              # for patch_series
         'IPython',          # for sidebyside
-        'orderedset'],      # for stack and unstack
+        'ordered-set'],     # for stack and unstack
     packages=['pdi'],
     classifiers=[
         'Programming Language :: Python :: 3',

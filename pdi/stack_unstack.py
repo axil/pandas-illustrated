@@ -2,7 +2,7 @@
 from itertools import tee
 from functools import reduce as _reduce
 
-from orderedset import OrderedSet as oset
+from ordered_set import OrderedSet as oset
 
 
 def pairwise(iterable):
