@@ -12,6 +12,7 @@ from pandas.core.generic import NDFrame
 
 from .drop import drop
 from .visuals import patch_series, unpatch_series, sidebyside
+from .stack_unstack import stack, unstack
 
 __all__ = [
     "find",
@@ -24,6 +25,9 @@ __all__ = [
     "unpatch_series",
     "sidebyside",
     "patch_dataframe",
+    "from_dict",
+    "stack",
+    "unstack",
 ]
 
 
@@ -252,3 +256,14 @@ def get_co(self):
 def patch_dataframe():
     pd.DataFrame.mi = get_mi
     pd.DataFrame.co = get_co
+
+
+def from_dict(d):
+    """
+    dict of lists => MultiIndex from values
+    dict of tuples => MultiIndex from product
+    """
+    if d and isinstance(next(iter(d.values())), tuple):
+        return pd.MultiIndex.from_product(list(d.values()), names=d.keys())
+    else:
+        return pd.MultiIndex.from_tuples(zip(*d.values()), names=d.keys())
