@@ -72,27 +72,16 @@ def toposort_flatten(data, sort=True):
 
 def stack(df, level=-1, dropna=False):
     n = df.columns.nlevels
-    if isinstance(level, int):
-        if level >= n:
-            raise IndexError(f'Level number is out of bounds: {level} > {n-1}')
-        elif level >= 0:
-            level_pos = level
-        elif level < -n:
-            raise IndexError(f'Level number is out of bounds: {level} < -{n}')
-        else:
-            level_pos = n + level
-    else:
-        try:
-            level_pos = df.columns.names.index(level)
-        except ValueError:
-            raise ValueError(f'level name {level} not found in the index level names')
+    if n == 1:      # nothing to be done
+        return df.stack(level, dropna=dropna)
+    level_num = df.index._get_level_number(level)
     fr = df.columns.to_frame(index=False)
-    others = [fr.iloc[:, i] for i in range(fr.shape[1]) if i != level_pos]
+    others = [fr.iloc[:, i] for i in range(fr.shape[1]) if i != level_num]
     others_chunks = oset()
     chunks = oset()
     for k, v in fr.groupby(others, sort=False):
         others_chunks.add(k)
-        chunks.add(tuple(v.iloc[:,level_pos].tolist()))
+        chunks.add(tuple(v.iloc[:,level_num].tolist()))
     d = process(chunks); d
     stacked = toposort_flatten(d, sort=False)
     df1 = df.stack(level, dropna=dropna)
@@ -105,27 +94,14 @@ def unstack(df, level=-1, dropna=False):
     n = df.index.nlevels
     if n == 1:      # nothing to be done
         return df.unstack(level, dropna=dropna)
-    if isinstance(level, int):
-        if level >= n:
-            raise IndexError(f'Level number is out of bounds: {level} > {n-1}')
-        elif level >= 0:
-            level_pos = level
-        elif level < -n:
-            raise IndexError(f'Level number is out of bounds: {level} < -{n}')
-        else:
-            level_pos = n + level
-    else:
-        try:
-            level_pos = df.index.names.index(level)
-        except ValueError:
-            raise ValueError(f'level name {level} not found in the index level names')
+    level_num = df.index._get_level_number(level)
     fr = df.index.to_frame(index=False)
-    others = [fr.iloc[:, i] for i in range(fr.shape[1]) if i != level_pos]
+    others = [fr.iloc[:, i] for i in range(fr.shape[1]) if i != level_num]
     others_chunks = oset()
     chunks = oset()
     for k, v in fr.groupby(others, sort=False):
         others_chunks.add(k)
-        chunks.add(tuple(v.iloc[:,level_pos].tolist()))
+        chunks.add(tuple(v.iloc[:,level_num].tolist()))
     d = process(chunks); d
     stacked = toposort_flatten(d, sort=False)
     df1 = df.unstack(level, dropna=dropna)
