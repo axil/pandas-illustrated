@@ -65,9 +65,29 @@ def test_get_categories():
                              'L': ('d', 'c'),
                              'M': ('f', 'e')}), 
         columns=['A', 'B'])
-    assert _get_categories(df.index, 0).tolist() == ['b', 'a']
-    assert _get_categories(df.index, 1).tolist() == ['d', 'c']
-    assert _get_categories(df.index, 2).tolist() == ['f', 'e']
+    assert _get_categories(df.index, 0, 'index').tolist() == ['b', 'a']
+    assert _get_categories(df.index, 1, 'index').tolist() == ['d', 'c']
+    assert _get_categories(df.index, 2, 'index').tolist() == ['f', 'e']
+
+
+def test_dropped_column():
+    df = pd.DataFrame(
+        np.arange(1, 9).reshape(2, 4),
+        index=list('ab'),
+        columns=pd.MultiIndex.from_product([list('AB'), list('CD')]))
+
+    df1 = df.drop(columns=('A', 'D'))
+
+    with pytest.raises(ValueError):
+        pdi.lock_order(df1)
+
+    df1 = lock_order(df, level=0, axis=1, inplace=False)
+    assert isinstance(df1.columns.get_level_values(0), pd.CategoricalIndex)
+    assert df1.columns.values.tolist() == df.columns.values.tolist()
+    
+    df1 = lock_order(df, axis=0, inplace=False)
+    assert isinstance(df1.index, pd.CategoricalIndex)
+    assert df1.index.values.tolist() == df.index.values.tolist()
 
 
 if __name__ == '__main__':

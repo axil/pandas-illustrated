@@ -16,7 +16,7 @@ def _is_monotonic_increasing(a):
     return np.all(a[1:]>=a[:-1])
 
 
-def _get_categories(mi, level):
+def _get_categories(mi, level, ax):
     if level==0:
         index = mi.get_level_values(level)
         codes, uniques = pd.factorize(index.values)
@@ -26,20 +26,17 @@ def _get_categories(mi, level):
             raise ValueError(f'Non-monotonic labels in level={level}. '
                              'Use lock_order(..., categories=[list of categories]).')
     else:
-        try:
-            fr = mi.to_frame(index=False)
-            seq = None
-            cumcol = [fr.iloc[:, i] for i in range(level)]
-            for k, v in fr.groupby(cumcol, sort=False):
-                if seq is None:
-                    seq = v.iloc[:, level]
-                else:
-                    if not np.all(seq.values==v.iloc[:, level].values):
-                        raise ValueError(f'Missing labels in level {level}. '
-                                         'Use lock_order(..., categories=[list of categories]).')
-            categories = seq.unique()
-        except:
-            from IPython.core.debugger import Pdb; Pdb().set_trace()
+        fr = mi.to_frame(index=False)
+        seq = None
+        cumcol = [fr.iloc[:, i] for i in range(level)]
+        for k, v in fr.groupby(cumcol, sort=False):
+            if seq is None:
+                seq = v.iloc[:, level]
+            else:
+                if not np.all(seq.values==v.iloc[:, level].values):
+                    raise ValueError(f'Missing label(s) in level {level} of {ax}. '
+                                      'Use lock_order(..., categories=[list of categories]).')
+        categories = seq.unique()
     return categories
 
 
@@ -66,13 +63,13 @@ def lock_order(df, level=None, axis=None, categories=None, inplace=True):
                 if categories is not None:
                     _categories = categories[level]
                 else:
-                    _categories = _get_categories(mi, level)
+                    _categories = _get_categories(mi, level, ax)
                 cur_index = mi.get_level_values(level)
                 indices.append(pd.CategoricalIndex(cur_index, _categories, ordered=True))
             new_mi = pd.MultiIndex.from_arrays(indices)
         else:
             if categories is None:
-                categories = _get_categories(mi, level)
+                categories = _get_categories(mi, level, ax)
             indices = [mi.get_level_values(i) for i in range(mi.nlevels)]
             indices[level] = pd.CategoricalIndex(indices[level], categories, ordered=True)
             new_mi = pd.MultiIndex.from_arrays(indices)
