@@ -71,7 +71,7 @@ def test3():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
     with pytest.raises(ValueError) as exinfo:
         insert(df, -1, [1, 2, 3])
-    assert str(exinfo.value) == 'Must verify 0 <= loc <= len(dst)'
+    assert str(exinfo.value) == 'Must verify 0 <= pos <= len(dst)'
 
 
 def test4():
@@ -267,9 +267,16 @@ def test_series3():
 
 def test_allow_duplicates():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=['A', 'B', 'C'])
+    
     with pytest.raises(ValueError) as exinfo:
         insert(df, 0, [1, 2, 3], allow_duplicates=False)
-    assert str(exinfo.value) == 'cannot insert label 0, already exists; consider ignore_index=True'
+    assert 'Cannot insert label 0' in str(exinfo.value)
+    
+    df.flags.allows_duplicate_labels = False
+    with pytest.raises(ValueError) as exinfo:
+        insert(df, 0, [1, 2, 3])
+    assert 'Cannot insert label 0' in str(exinfo.value)
+    
     df1 = insert(df, 0, [1, 2, 3], label=2, allow_duplicates=False)
     assert vi(df1) == ([[1, 2, 3], [4, 5, 6], [7, 8, 9]], [2, 0, 1])
 

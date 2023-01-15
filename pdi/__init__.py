@@ -71,7 +71,7 @@ def findall(s, x, pos=False):
 
 
 def insert(dst: NDFrame, 
-           loc: int, 
+           pos: int, 
            value: Scalar | AnyArrayLike | Sequence,
            label: Hashable = 0, 
            ignore_index: bool = False, 
@@ -82,8 +82,8 @@ def insert(dst: NDFrame,
 
     dst : 
         Series or DataFrame to insert into.
-    loc : int
-        Insertion index. Must verify 0 <= loc <= len(dst).
+    pos : int
+        Insertion index. Must verify 0 <= pos <= len(dst).
     value : 
         Row(s) to insert. 
     label : scalar or tuple
@@ -97,8 +97,8 @@ def insert(dst: NDFrame,
     """
     
     n = len(dst)
-    if not 0 <= loc <= n:
-        raise ValueError('Must verify 0 <= loc <= len(dst)')
+    if not 0 <= pos <= n:
+        raise ValueError('Must verify 0 <= pos <= len(dst)')
     
     if isinstance(dst, pd.DataFrame):
         if isinstance(value, (list, tuple)):
@@ -121,13 +121,20 @@ def insert(dst: NDFrame,
     else:
         raise TypeError(f'Supported dst types are: DataFrame, Series. Got type {type(dst)}')
     
-    if allow_duplicates is False and len(dst.index.intersection(dst1.index)):
-        raise ValueError(f'cannot insert label {label!r}, already exists; consider ignore_index=True')
+    if (allow_duplicates is False or dst.flags.allows_duplicate_labels is False) \
+            and len(dst.index.intersection(dst1.index)):
+        msg = f'Cannot insert label {label!r}, already exists and '
+        if allow_duplicates is False:
+            msg += 'allow_duplicates is False, '
+        if dst.flags.allows_duplicate_labels is False:
+            msg += 'dst.flags.allows_duplicate_labels is False, '
+        msg += 'consider ignore_index=True'
+        raise ValueError(msg)
 
-    if loc == n:  # just for speed, not really necessary
+    if pos == n:  # just for speed, not really necessary
         return pd.concat([dst, dst1], ignore_index=ignore_index)
     else:
-        return pd.concat([dst[:loc], dst1, dst[loc:]], ignore_index=ignore_index)
+        return pd.concat([dst[:pos], dst1, dst[pos:]], ignore_index=ignore_index)
 
 
 def _move(a, pos, val):
