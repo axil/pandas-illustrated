@@ -56,5 +56,30 @@ def test_columns():
         ([[1, 4], [7, 10]], ['A', 'B'], ['a1', 'b1'])
 
 
+def test_multiindex1_index():
+    df = pd.DataFrame(
+        np.arange(1, 9).reshape(4, 2),
+        index=pd.MultiIndex.from_product([list('ab'), list('cd')]), 
+        columns=list('AB'))
+    df1 = drop(df, index=('a','d'))
+    assert vic(df1) == \
+        ([[1, 2], [5, 6], [7, 8]], [('a', 'c'), ('b', 'c'), ('b', 'd')], ['A', 'B'])
+    df1 = drop(df, index=[('a','d'), ('b','c')])
+    assert vic(df1) == \
+        ([[1, 2], [7, 8]], [('a', 'c'), ('b', 'd')], ['A', 'B'])
+
+
+def test_multiindex2_columns():
+    df = pd.DataFrame(
+        np.arange(1, 9).reshape(2, 4),
+        index=list('ab'),
+        columns=pd.MultiIndex.from_product([list('AB'), list('CD')]))
+    df1 = drop(df, columns=('A','D'))
+    assert vic(df1) == \
+        ([[1, 3, 4], [5, 7, 8]], ['a', 'b'], [('A', 'C'), ('B', 'C'), ('B', 'D')])
+    df1 = drop(df, columns=[('A','D'), ('B','C')])
+    assert vic(df1) == \
+        ([[1, 4], [5, 8]], ['a', 'b'], [('A', 'C'), ('B', 'D')])
+
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])

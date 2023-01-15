@@ -28,6 +28,7 @@ __all__ = [
     "from_dict",
     "stack",
     "unstack",
+    "swap_levels",
 ]
 
 
@@ -267,3 +268,8 @@ def from_dict(d):
         return pd.MultiIndex.from_product(list(d.values()), names=d.keys())
     else:
         return pd.MultiIndex.from_tuples(zip(*d.values()), names=d.keys())
+
+def swap_levels(df, i, j, axis=0):
+    df1 = df.swaplevel(i, j, axis=axis)
+    df2 = df1.sort_index(key=lambda x: pd.factorize(x)[0], axis=axis)
+    return df2

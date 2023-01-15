@@ -31,6 +31,8 @@ def _drop(obj: NDFrameT,
 
     if items is not None:
         name = obj._get_axis_name(axis)
+        if isinstance(items, tuple):
+            items = [items]
         return obj.reindex(**{name: [r for r in labels if r not in items]})
     
     elif like:
@@ -56,6 +58,13 @@ def drop(obj: NDFrameT,
          index=None, index_like=None, index_re=None, 
          columns=None, columns_like=None, columns_re=None, 
 ) -> NDFrameT:
+    """
+    In addition to the standard mode (exact match) adds:
+      - substring match, and regular expressions (like in 'filter')
+      - boolean indexing.
+    E.g. drop(df, index=df.A>10) deletes all rows where values 
+    in column A are above 10.
+    """
     nkw = com.count_not_none(
             index, index_re, index_like,
             columns, columns_re, columns_like, 
