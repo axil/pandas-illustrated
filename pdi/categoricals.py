@@ -1,5 +1,6 @@
 ﻿import numpy as np
 import pandas as pd
+from pandas._libs import lib
 
 
 def show_mi(mi):
@@ -171,7 +172,7 @@ def vis_lock(obj, checkmark='✓'):
                     _mark_mi(mi, i)
     return obj1
 
-def from_product(iterables, sortorder=None, names=None, lock_order=True) -> 'MultiIndex':
+def from_product(iterables, sortorder=None, names=lib.no_default, lock_order=True) -> pd.MultiIndex:
     mi = pd.MultiIndex.from_product(iterables, sortorder=sortorder, names=names)
     if lock_order is True:
         return globals()['lock_order'](mi)
