@@ -13,6 +13,7 @@ from pandas.core.generic import NDFrame
 from .drop import drop
 from .visuals import patch_series, unpatch_series, sidebyside
 from .stack_unstack import stack, unstack
+from .categoricals import lock_order, vis_lock
 
 __all__ = [
     "find",
@@ -29,6 +30,8 @@ __all__ = [
     "stack",
     "unstack",
     "swap_levels",
+    "lock_order",
+    "vis_lock",
 ]
 
 
