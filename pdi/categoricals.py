@@ -40,15 +40,58 @@ def _get_categories(mi, level, ax):
     return categories
 
 
-def lock_order(df, level=None, axis=None, categories=None, inplace=True):
+def lock_order(obj, level=None, axis=None, categories=None, inplace=True):
+    """
+    Converts level(s) of Index or MultiIndex of DataFrame or Series to Categoricals.
+    Requires either:
+        - structure similar to the result of 'from_product', or
+        - order is provided explicitly via categories argument
+    
+    level :
+        int (single level) or None (all levels)
+
+    axis :
+        0/1/'index'/'columns' (single axis) or None (all axes)
+
+    categories :
+        provide if the MultiIndex has non-regular structure
+
+    inplace : bool
+        return a copy (False) or change in place (True)
+
+    For example:
+    1) MultiIndex([('B', 'D'),
+                   ('B', 'C'),
+                   ('A', 'D'),
+                   ('A', 'C')])
+    here lock_order works for both level 0 and level 1.
+    
+    2) MultiIndex([('B', 'D'),
+                   ('B', 'C'),
+                   ('A', 'D')])
+    here lock_order works for level 0 but not for level 1;
+    use `lock_order(level=1, categories=['D','C'])`.
+    
+    3) MultiIndex([('B', 'D'),
+                   ('A', 'D'),
+                   ('B', 'C'),
+                   ('A', 'C')])
+    here lock_order works for level 1 but not for level 0;
+    use `lock_order(level=0, categories=['B','A'])`.
+    """
+
+    if level is not None and axis is None:
+        raise ValueError('When level is specified, axis becomes a required argument')
     if inplace is False:
-        df = df.copy()
-    if axis in (0, 'index'):
-        mis = {'index': df.index}
+        obj = obj.copy()
+    if isinstance(obj, pd.Series):
+        mis = {'index': obj.index}
+    elif axis in (0, 'index'):
+        mis = {'index': obj.index}
     elif axis in (1, 'columns'):
-        mis = {'columns': df.columns}
+        mis = {'columns': obj.columns}
     elif axis is None:
-        mis = {'index': df.index, 'columns': df.columns}
+        mis = {'index': obj.index, 'columns': obj.columns}
     else:
         raise ValueError('"axis" must be one of [0, 1, "index", "columns"]')
      
@@ -73,13 +116,17 @@ def lock_order(df, level=None, axis=None, categories=None, inplace=True):
             indices = [mi.get_level_values(i) for i in range(mi.nlevels)]
             indices[level] = pd.CategoricalIndex(indices[level], categories, ordered=True)
             new_mi = pd.MultiIndex.from_arrays(indices)
-    #    return df.reindex(index=new_mi, copy=False)     # it'd be better to do it in-place
-        setattr(df, ax, new_mi)
+    #    return df.reindex(index=new_mi, copy=False)     # it's better to do it in-place
+        setattr(obj, ax, new_mi)
     if inplace is False:
-        return df
+        return obj
 
 
-def vis_lock(df, checkmark='✓'):
+def vis_lock(obj, checkmark='✓'):
+    """
+    Displays a checkmark next to Index/MultiIndex level names of a DataFrame or a Series
+    if the level is Categorical
+    """
     def _mark_i(mi):
         if mi.name is None:
             mi.name = checkmark
@@ -94,8 +141,12 @@ def vis_lock(df, checkmark='✓'):
             name = str(name) + checkmark
         mi.rename(name, level=level, inplace=True)
 
-    df1 = df.copy()  # would be faster to avoid this copy
-    for mi in df1.index, df1.columns:
+    obj1 = obj.copy()  # the proper solution would be to avoid this copy
+    if isinstance(obj1, pd.Series):
+        mis = [obj1.index]
+    else:
+        mis = [obj1.index, obj1.columns]
+    for mi in mis:
         if mi.nlevels == 1:
             if isinstance(mi, pd.CategoricalIndex):
                 _mark_i(mi)
@@ -103,4 +154,4 @@ def vis_lock(df, checkmark='✓'):
             for i in range(mi.nlevels):
                 if isinstance(mi.get_level_values(i), pd.CategoricalIndex):
                     _mark_mi(mi, i)
-    return df1
+    return obj1

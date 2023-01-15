@@ -90,5 +90,31 @@ def test_dropped_column():
     assert df1.index.values.tolist() == df.index.values.tolist()
 
 
+def test_incorrect_sorting():
+    df = pd.DataFrame(
+        np.arange(1, 9).reshape(4, 2),
+        index=pdi.from_dict({'K': list('baab'), 'L': list('ddcc')}),
+        columns=list('AB'))
+    
+    df1 = pdi.lock_order(df, axis=0, level=1, inplace=False)
+    assert isinstance(df1.index.get_level_values(1), pd.CategoricalIndex)
+    assert df1.columns.values.tolist() == df.columns.values.tolist()
+    assert df1.index.values.tolist() == df.index.values.tolist()
+    
+    with pytest.raises(ValueError):
+        pdi.lock_order(df, axis=0, level=0)
+
+
+def test_series():
+    s = pd.Series(
+            np.arange(12),          
+            index=pdi.from_dict({'K': tuple('BA'), 
+                                 'L': tuple('PYTHON')}))
+    s1 = lock_order(s, inplace=False)
+    assert isinstance(s1.index.get_level_values(0), pd.CategoricalIndex)
+    assert isinstance(s1.index.get_level_values(1), pd.CategoricalIndex)
+    assert s1.index.values.tolist() == s.index.values.tolist()
+
+
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])
