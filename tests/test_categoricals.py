@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 import pdi
-from pdi import lock_order
+from pdi import lock_order, from_product
 from pdi.categoricals import _get_categories
 
 
@@ -161,6 +161,12 @@ def test_categories():
           ('B', 'H'),
           ('B', 'O'),
           ('B', 'N')])
+
+
+def test_from_product():
+    mi = from_product([[2022, 2021], list('PYTHON')], names=['K', 'L'])
+    assert isinstance(mi.get_level_values(0), pd.CategoricalIndex)
+    assert isinstance(mi.get_level_values(1), pd.CategoricalIndex)
 
 
 if __name__ == '__main__':

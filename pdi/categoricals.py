@@ -171,4 +171,9 @@ def vis_lock(obj, checkmark='✓'):
                     _mark_mi(mi, i)
     return obj1
 
-
+def from_product(iterables, sortorder=None, names=None, lock_order=True) -> 'MultiIndex':
+    mi = pd.MultiIndex.from_product(iterables, sortorder=sortorder, names=names)
+    if lock_order is True:
+        return globals()['lock_order'](mi)
+    else:
+        return mi
