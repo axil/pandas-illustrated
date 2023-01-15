@@ -116,5 +116,52 @@ def test_series():
     assert s1.index.values.tolist() == s.index.values.tolist()
 
 
+def test_index():
+    idx = pd.Index(list('PYTHON'))
+    idx1 = pdi.lock_order(idx)
+    assert isinstance(idx1, pd.CategoricalIndex)
+    assert idx1.values.tolist() == list('PYTHON')
+    assert idx1.categories.tolist() == list('PYTHON')
+    assert idx1.ordered == True
+
+def test_multiindex():
+    idx = pd.MultiIndex.from_product([('B', 'A'), ('D', 'C')])
+    idx1 = pdi.lock_order(idx)
+    L1 = idx1.get_level_values(0)
+    L2 = idx1.get_level_values(1)
+    
+    assert isinstance(L1, pd.CategoricalIndex)
+    assert L1.values.tolist() == ['B', 'B', 'A', 'A']
+    assert L1.categories.tolist() == ['B', 'A']
+    assert L1.ordered == True
+    
+    assert isinstance(L2, pd.CategoricalIndex)
+    assert L2.values.tolist() == ['D', 'C', 'D', 'C']
+    assert L2.categories.tolist() == ['D', 'C']
+    assert L2.ordered == True
+
+
+def test_categories():
+    idx = pd.MultiIndex.from_product([('B','A'), tuple('PTHYON')])
+    idx1 = pdi.lock_order(idx, level=1, categories=list('PYTHON'))
+    s = pd.Series(np.arange(1, 13), index=idx1)
+    assert s.index.get_level_values(1).categories.tolist() == list('PYTHON')
+    s1 = s.sort_index()
+    assert vi(s1) == \
+        ([7, 10, 8, 9, 11, 12, 1, 4, 2, 3, 5, 6],
+         [('A', 'P'),
+          ('A', 'Y'),
+          ('A', 'T'),
+          ('A', 'H'),
+          ('A', 'O'),
+          ('A', 'N'),
+          ('B', 'P'),
+          ('B', 'Y'),
+          ('B', 'T'),
+          ('B', 'H'),
+          ('B', 'O'),
+          ('B', 'N')])
+
+
 if __name__ == '__main__':
     pytest.main(['-s', __file__])  # + '::test7'])
