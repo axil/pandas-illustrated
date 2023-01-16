@@ -38,7 +38,7 @@ __all__ = [
 
 def find(s, x, pos=False):
     """
-    Finds element x in Series s. 
+    Finds element x in Series s.
     Returns index label (default) or positional index (pos=True).
     Raises ValueError if x is missing from s.
     """
@@ -46,11 +46,11 @@ def find(s, x, pos=False):
         try:
             idx = s.tolist().index(x)
         except ValueError:
-            raise ValueError(f'{x!r} is not in Series')
+            raise ValueError(f"{x!r} is not in Series")
     else:
         indices = np.where(s == x)[0]
         if not len(indices):
-            raise ValueError(f'{x!r} is not in Series')
+            raise ValueError(f"{x!r} is not in Series")
         idx = indices[0]
     if pos:
         return idx
@@ -70,36 +70,38 @@ def findall(s, x, pos=False):
         return s.index[idx]
 
 
-def insert(dst: NDFrame, 
-           pos: int, 
-           value: Scalar | AnyArrayLike | Sequence,
-           label: Hashable = 0, 
-           ignore_index: bool = False, 
-           allow_duplicates: bool = None) -> NDFrame:
+def insert(
+    dst: NDFrame,
+    pos: int,
+    value: Scalar | AnyArrayLike | Sequence,
+    label: Hashable = 0,
+    ignore_index: bool = False,
+    allow_duplicates: bool = None,
+) -> NDFrame:
     """
     Inserts DataFrame, Series, list, tuple or dict into DataFrame as a row.
     Also inserts Series, list or a tuple into a Series.
 
-    dst : 
+    dst :
         Series or DataFrame to insert into.
     pos : int
         Insertion index. Must verify 0 <= pos <= len(dst).
-    value : 
-        Row(s) to insert. 
+    value :
+        Row(s) to insert.
     label : scalar or tuple
         Index label (use tuple for a MultiIndex label).
     ignore_index : bool, default False
-        If True, do not use the existing index. The resulting rows will be 
+        If True, do not use the existing index. The resulting rows will be
         labeled 0, ..., n - 1. This is useful if you are inserting into a
         Series or a DataFrame which index does not have meaningful information.
-    allow_duplicates : bool, default False 
+    allow_duplicates : bool, default False
         Check for duplicates before inserting
     """
-    
+
     n = len(dst)
     if not 0 <= pos <= n:
-        raise ValueError('Must verify 0 <= pos <= len(dst)')
-    
+        raise ValueError("Must verify 0 <= pos <= len(dst)")
+
     if isinstance(dst, pd.DataFrame):
         if isinstance(value, (list, tuple)):
             dst1 = pd.DataFrame([value], columns=dst.columns, index=[label])
@@ -110,8 +112,8 @@ def insert(dst: NDFrame,
         elif isinstance(value, pd.Series):
             dst1 = value.to_frame().T
         else:
-            raise TypeError(f'Received value of type {type(value)}')
-    
+            raise TypeError(f"Received value of type {type(value)}")
+
     elif isinstance(dst, pd.Series):
         if isinstance(value, pd.Series):
             dst1 = value
@@ -119,16 +121,19 @@ def insert(dst: NDFrame,
             dst1 = pd.Series(value, index=[label])
 
     else:
-        raise TypeError(f'Supported dst types are: DataFrame, Series. Got type {type(dst)}')
-    
-    if (allow_duplicates is False or dst.flags.allows_duplicate_labels is False) \
-            and len(dst.index.intersection(dst1.index)):
-        msg = f'Cannot insert label {label!r}, already exists and '
+        raise TypeError(
+            f"Supported dst types are: DataFrame, Series. Got type {type(dst)}"
+        )
+
+    if (
+        allow_duplicates is False or dst.flags.allows_duplicate_labels is False
+    ) and len(dst.index.intersection(dst1.index)):
+        msg = f"Cannot insert label {label!r}, already exists and "
         if allow_duplicates is False:
-            msg += 'allow_duplicates is False, '
+            msg += "allow_duplicates is False, "
         if dst.flags.allows_duplicate_labels is False:
-            msg += 'dst.flags.allows_duplicate_labels is False, '
-        msg += 'consider ignore_index=True'
+            msg += "dst.flags.allows_duplicate_labels is False, "
+        msg += "consider ignore_index=True"
         raise ValueError(msg)
 
     if pos == n:  # just for speed, not really necessary
@@ -156,7 +161,7 @@ def move(obj, pos, label=None, column=None, index=None, axis=None, reset_index=F
        — column='A'
        — index='a'
        — label='A', axis=1         # same as column='A'
-       — label='a', axis=0         # same as index='a'  
+       — label='a', axis=0         # same as index='a'
        — label='a'                 # axis is not required for Series
     Must verify 0 <= pos <= len(columns or index)
     Renumbers the rows from 0 if drop_index is True
@@ -169,7 +174,7 @@ def move(obj, pos, label=None, column=None, index=None, axis=None, reset_index=F
         1  3  4  ->  1  1  2
         2  5  6      2  3  4
 
-    
+
     """
     if index is not None:
         label = index
@@ -177,8 +182,8 @@ def move(obj, pos, label=None, column=None, index=None, axis=None, reset_index=F
     elif column is not None:
         label = column
         axis = 1
-        
-    if isinstance(obj, pd.Series) or axis in (0, 'rows'):
+
+    if isinstance(obj, pd.Series) or axis in (0, "rows"):
         obj = obj.reindex(_move(obj.index.tolist(), pos, label))
         if reset_index:
             obj.reset_index(drop=True, inplace=True)
@@ -187,54 +192,60 @@ def move(obj, pos, label=None, column=None, index=None, axis=None, reset_index=F
         return obj.reindex(columns=_move(obj.columns.tolist(), pos, label))
 
 
-def join(dfs, on=None, how='left', suffixes=None):
+def join(dfs, on=None, how="left", suffixes=None):
     """
-    Joins several dataframes. 
+    Joins several dataframes.
 
-    dfs : 
+    dfs :
         A list of Series or DataFrames.
     on :
         Specifies columns of the first frame. Other dataframes are always joined by index.
     how : {'left', 'right', 'outer', 'inner'}, default 'left'
         Can either be a string or a list of len(dfs)-1 strings.
     suffixes :
-        A list of len(dfs) strings. Suffixes support is not perfect, yet covers 
+        A list of len(dfs) strings. Suffixes support is not perfect, yet covers
         basic use cases.
     """
     if len(dfs) < 2:
-        raise ValueError('Two or more series or dataframes expected')
-    if on is None and suffixes is None and how == 'left':
+        raise ValueError("Two or more series or dataframes expected")
+    if on is None and suffixes is None and how == "left":
         return dfs[0].join(dfs[1:])
     else:
         df = dfs[0]
-        n = len(dfs)-1
-        
+        n = len(dfs) - 1
+
         if on is None:
-            on = [None]*n
+            on = [None] * n
         elif isinstance(on, str):
             on = [on] * n
         elif isinstance(on, (list, tuple)) and len(on) != n:
-            raise ValueError(f'"on" is expected to be either a string or a list of length {n}')
+            raise ValueError(
+                f'"on" is expected to be either a string or a list of length {n}'
+            )
 
         if isinstance(how, str):
             how = [how] * n
         elif isinstance(how, (list, tuple)) and len(how) != n:
-            raise ValueError(f'"how" is expected to be either a string or a list of length {n}')
-        
+            raise ValueError(
+                f'"how" is expected to be either a string or a list of length {n}'
+            )
+
         if suffixes is None:
-            suffixes = [''] * (n+1)
-        elif isinstance(suffixes, (list, tuple)) and len(suffixes) != n+1:
+            suffixes = [""] * (n + 1)
+        elif isinstance(suffixes, (list, tuple)) and len(suffixes) != n + 1:
             raise ValueError(f'"suffixes" is expected to be a list of length {n+1}')
-        
+
         for i, df_i in enumerate(dfs[1:]):
-            df = df.join(df_i, on=on[i], how=how[i], lsuffix=suffixes[i], rsuffix=suffixes[i+1])
+            df = df.join(
+                df_i, on=on[i], how=how[i], lsuffix=suffixes[i], rsuffix=suffixes[i + 1]
+            )
         return df
 
 
 class Mi:
     def __init__(self, df):
         self.df = df
-        
+
     def __getitem__(self, args):
         return self.df.loc[args, :]
 
@@ -251,7 +262,7 @@ def get_mi(self):
 class Co:
     def __init__(self, df):
         self.df = df
-        
+
     def __getitem__(self, args):
         return self.df.loc[:, args]
 
@@ -279,6 +290,7 @@ def from_dict(d):
         return pd.MultiIndex.from_product(list(d.values()), names=d.keys())
     else:
         return pd.MultiIndex.from_tuples(zip(*d.values()), names=d.keys())
+
 
 def swap_levels(df, i, j, axis=0):
     df1 = df.swaplevel(i, j, axis=axis)
