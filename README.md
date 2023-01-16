@@ -2,6 +2,7 @@
 
 ![pytest](https://github.com/axil/pandas-illustrated/actions/workflows/python-package.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Coverage Badge](img/coverage.svg)]
 
 This repo contains code for `find()` and `findall()` functions that help in searching Series by value.
 Chooses optimal implementation depending on the size of the Series.

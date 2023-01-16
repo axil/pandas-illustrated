@@ -1,3 +1,5 @@
-﻿pandas>=1.4.4     # 1.3.5 does not have NDFrameT
+﻿pandas
+bs4               # for parch_series
 IPython           # for sidebyside
 #pytest-mock      # for tests
+#coverage-badge
