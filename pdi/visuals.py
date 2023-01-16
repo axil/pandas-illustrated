@@ -58,8 +58,10 @@ def unpatch_series():
     """
     Reverts changes applied by patch_series()
     """
-    pd.Series._repr_html_ = None
-    pd.Series.to_html = None
+    if hasattr(pd.Series, '_repr_html_'):
+        del pd.Series._repr_html_
+    if hasattr(pd.Series, 'to_html'):
+        del pd.Series.to_html
 
 
 def sidebyside(*dfs, names=[], index=True, valign="top"):

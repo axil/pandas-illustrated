@@ -3,16 +3,6 @@ import pandas as pd
 from pandas._libs import lib
 
 
-def show_mi(mi):
-    for i in range(mi.nlevels):
-        print(mi.get_level_values(i))
-
-
-def show_df(df):
-    show_mi(df.index)
-    show_mi(df.columns)
-
-
 def _is_monotonic_increasing(a):
     return np.all(a[1:] >= a[:-1])
 
@@ -93,6 +83,11 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=True):
     if isinstance(obj, pd.DataFrame) and level is not None and axis is None:
         raise ValueError(
             'When "level" is specified, "axis" becomes a required argument'
+        )
+    
+    if not isinstance(obj, (pd.DataFrame, pd.Series, pd.Index)):
+        raise ValueError(
+            "`obj` is expected to be a DataFrame, Series, Index or MultiIndex"
         )
 
     if inplace is False:

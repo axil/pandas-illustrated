@@ -100,9 +100,9 @@ def drop(
             return _drop(obj, items=index, axis=0)
 
     elif columns_like is not None:
-        return _drop(obj, regex=columns_like, axis=1)
+        return _drop(obj, like=columns_like, axis=1)
     elif index_like is not None:
-        return _drop(obj, regex=index_like, axis=0)
+        return _drop(obj, like=index_like, axis=0)
 
     elif columns_re is not None:
         return _drop(obj, regex=columns_re, axis=1)

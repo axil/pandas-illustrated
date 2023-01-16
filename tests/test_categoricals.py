@@ -1,3 +1,5 @@
+from math import inf
+
 import pytest
 
 import numpy as np
@@ -15,6 +17,13 @@ def vi(s):
 def vic(s):
     return s.values.tolist(), s.index.to_list(), s.columns.to_list()
 
+def vicn(s):
+    return (
+        s.fillna(inf).values.tolist(),
+        s.index.to_list(),
+        s.columns.to_list(),
+        [list(s.index.names), list(s.columns.names)],
+    )
 
 def is_categorical(index, level):
     return isinstance(index.get_level_values(level), pd.CategoricalIndex)
@@ -75,6 +84,11 @@ def check_per_level(df0, axis="index"):
 def range2d(n, m):
     return np.arange(1, n * m + 1).reshape(n, m)
 
+
+def test_types():
+    with pytest.raises(ValueError):
+        pdi.lock_order('hmm')
+    
 
 @pytest.mark.parametrize(
     "df0",
@@ -194,9 +208,6 @@ def range2d(n, m):
     ],
 )
 def test_lock_order(df0):
-    #    if df0.values.shape == (4, 4):
-    #        import ipdb; ipdb.set_trace()
-
     # per level
     check_per_level(df0, "index")
     check_per_level(df0, "columns")
@@ -338,6 +349,81 @@ def test_categories():
 def test_from_product():
     mi = from_product([[2022, 2021], list("PYTHON")], names=["K", "L"])
     check_all_categorical(mi)
+
+
+def test_vis_lock():
+    df = pd.DataFrame(
+            range2d(4, 4),
+            index=pdi.from_dict(
+                {
+                    "k": ("b", "a"),
+                    "l": ("d", "c"),
+                }
+            ),
+            columns=pdi.from_dict(
+                {
+                    "K": ("B", "A"),
+                    "L": ("D", "C"),
+                }
+            ),
+        )  # 2Lx2L
+
+    df1 = lock_order(df, axis=0, level=0, inplace=False)
+    df2 = pdi.vis_lock(df1)
+    assert df2.index.names == ['k✓', 'l']
+    assert df2.columns.names == ['K', 'L']
+    
+    df1 = lock_order(df, axis=0, level=1, inplace=False)
+    df2 = pdi.vis_lock(df1)
+    assert df2.index.names == ['k', 'l✓']
+    assert df2.columns.names == ['K', 'L']
+    
+    df1 = lock_order(df, axis=1, level=0, inplace=False)
+    df2 = pdi.vis_lock(df1)
+    assert df2.index.names == ['k', 'l']
+    assert df2.columns.names == ['K✓', 'L']
+    
+    df1 = lock_order(df, axis=1, level=1, inplace=False)
+    df2 = pdi.vis_lock(df1)
+    assert df2.index.names == ['k', 'l']
+    assert df2.columns.names == ['K', 'L✓']
+
+def test_swap_levels():
+    df = pd.DataFrame(
+        range2d(4, 2),
+        index=pdi.from_dict(
+            {
+                "k": ("b", "a"),
+                "l": ("d", "c"),
+            }
+        ),
+        columns=["B", "A"],
+    )  # 2Lx1L
+    
+    df1 = pdi.swap_levels(df)
+    assert vicn(df1) == \
+        ([[7, 8], [3, 4], [5, 6], [1, 2]],
+        [('c', 'a'), ('c', 'b'), ('d', 'a'), ('d', 'b')],
+        ['B', 'A'],
+        [['l', 'k'], [None]])
+
+    df = pd.DataFrame(
+            range2d(2, 4),
+            index=["b", "a"],
+            columns=pdi.from_dict(
+                {
+                    "K": ("B", "A"),
+                    "L": ("D", "C"),
+                }
+            ),
+        )  # 1Lx2L
+
+    df1 = pdi.swap_levels(df, axis=1)
+    assert vicn(df1) == \
+        ([[4, 2, 3, 1], [8, 6, 7, 5]],
+        ['b', 'a'],
+        [('C', 'A'), ('C', 'B'), ('D', 'A'), ('D', 'B')],
+        [[None], ['L', 'K']])
 
 
 if __name__ == "__main__":

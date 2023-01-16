@@ -6,13 +6,17 @@ from typing import Hashable, Sequence
 
 from pandas._typing import (
     AnyArrayLike,
+    Axis,
     Scalar,
 )
 from pandas.core.generic import NDFrame
+try:
+    from pandas._typing import NDFrameT
+except:  # pandas < 1.4
+    from pandas._typing import FrameOrSeries
 
 from .drop import drop
 from .visuals import patch_series, unpatch_series, sidebyside
-from .stack_unstack import stack, unstack
 from .categoricals import lock_order, from_product, vis_lock
 
 __all__ = [
@@ -27,8 +31,6 @@ __all__ = [
     "sidebyside",
     "patch_dataframe",
     "from_dict",
-    "stack",
-    "unstack",
     "swap_levels",
     "lock_order",
     "from_product",
@@ -292,7 +294,8 @@ def from_dict(d):
         return pd.MultiIndex.from_tuples(zip(*d.values()), names=d.keys())
 
 
-def swap_levels(df, i, j, axis=0):
-    df1 = df.swaplevel(i, j, axis=axis)
-    df2 = df1.sort_index(key=lambda x: pd.factorize(x)[0], axis=axis)
-    return df2
+def swap_levels(obj: NDFrameT, i: Axis = -2, j: Axis = -1, axis: Axis = 0, sort=True) -> NDFrameT:
+    df1 = obj.swaplevel(i, j, axis=axis)
+    if sort:
+        df1.sort_index(axis=axis, inplace=True)
+    return df1
