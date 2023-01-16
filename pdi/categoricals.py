@@ -113,19 +113,20 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=True):
             if categories is not None and len(categories) != mi.nlevels:
                 raise ValueError(f'For level=None "categories" must be of the same len as MultiIndex ({mi.nlevels})')
             indices = []
-            for level in range(mi.nlevels):
+            for i in range(mi.nlevels):
                 if categories is not None:
-                    _categories = categories[level]
+                    _categories = categories[i]
                 else:
-                    _categories = _get_categories(mi, level, ax)
-                cur_index = mi.get_level_values(level)
+                    _categories = _get_categories(mi, i, ax)
+                cur_index = mi.get_level_values(i)
                 indices.append(pd.CategoricalIndex(cur_index, _categories, ordered=True))
             new_mi = pd.MultiIndex.from_arrays(indices)
         else:
+            level_num = mi._get_level_number(level)
             if categories is None:
-                categories = _get_categories(mi, level, ax)
+                categories = _get_categories(mi, level_num, ax)
             indices = [mi.get_level_values(i) for i in range(mi.nlevels)]
-            indices[level] = pd.CategoricalIndex(indices[level], categories, ordered=True)
+            indices[level_num] = pd.CategoricalIndex(indices[level_num], categories, ordered=True)
             new_mi = pd.MultiIndex.from_arrays(indices)
     #    return df.reindex(index=new_mi, copy=False)     # it's better to do it in-place
         if isinstance(obj, pd.Index):

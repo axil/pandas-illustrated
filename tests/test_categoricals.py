@@ -16,47 +16,145 @@ def vic(s):
     return s.values.tolist(), s.index.to_list(), s.columns.to_list()
 
 
-def test_lock_order1_3Lx1L():
-    df0 = pd.DataFrame(
-        np.zeros((8, 2), int), 
-        index=pdi.from_dict({'K': ('b', 'a'), 
-                             'L': ('d', 'c'),
-                             'M': ('f', 'e')}), 
-        columns=['B', 'A'])
-    for i in range(3):
-        df = df0.copy()
-        old_index = df.index.values.tolist()
-        lock_order(df, level=i, axis=0)
-        assert isinstance(df.index.get_level_values(i), pd.CategoricalIndex)
-        assert df.index.values.tolist() == old_index
+def check_all_categorical(index):
+    for i in range(index.nlevels):
+        assert isinstance(index.get_level_values(i), pd.CategoricalIndex)
+
+def check_none_categorical(index):
+    for i in range(index.nlevels):
+        assert not isinstance(index.get_level_values(i), pd.CategoricalIndex)
+
+def check_same_labels(df, df0):
+    assert df.index.values.tolist() == df0.index.values.tolist()
+    assert df.index.values.tolist() == df0.index.values.tolist()
+
+def check_per_level(df0, axis='index'):
+    other_axis = {'index': 'columns', 'columns': 'index'}
+    index0 = getattr(df0, axis)
     
-    df = df0.copy()
-    old_index = df.columns.values.tolist()
-    lock_order(df, axis=1)
-    assert isinstance(df.columns, pd.CategoricalIndex)
-    assert df.columns.values.tolist() == old_index
+    if index0.nlevels == 1:
+        df = df0.copy()
+        lock_order(df, axis=axis)
+        assert isinstance(getattr(df, axis), pd.CategoricalIndex)
+        check_same_labels(df, df0)
+        return
+    
+    # per level by position
+    for i in range(index0.nlevels):
+        df = df0.copy()
+        lock_order(df, level=i, axis=axis)
+        index = getattr(df, axis)
+        for j in range(index.nlevels):
+            if j == i:
+                assert isinstance(index.get_level_values(j), pd.CategoricalIndex), (i, j)
+            else:
+                assert not isinstance(index.get_level_values(j), pd.CategoricalIndex), (i, j)
+        check_none_categorical(getattr(df, other_axis[axis]))
+        check_same_labels(df, df0)
+    
+    # per level by name
+    for i, name in enumerate(index0.names):
+        df = df0.copy()
+        lock_order(df, level=name, axis=axis)
+        index = getattr(df, axis)
+        for j in range(index.nlevels):
+            if j == i:
+                assert isinstance(index.get_level_values(j), pd.CategoricalIndex)
+            else:
+                assert not isinstance(index.get_level_values(j), pd.CategoricalIndex)
+        check_same_labels(df, df0)
 
+def range2d(n, m):
+    return np.arange(1, n*m+1).reshape(n, m)
 
-def test_lock_order2_1Lx3L():
-    df0 = pd.DataFrame(
-        np.zeros((2, 8), int), 
+@pytest.mark.parametrize('df0', [
+    # 1L
+    pd.DataFrame(
+        range2d(3, 3), 
+        index=['c', 'b', 'a'],
+        columns=['C', 'B', 'A']),                     # 1Lx1L
+
+    # 2L
+    pd.DataFrame(
+        range2d(4, 2), 
+        index=pdi.from_dict({'k': ('b', 'a'), 
+                             'l': ('d', 'c')}),
+        columns=['B', 'A']),                          # 2Lx1L
+    pd.DataFrame(
+        range2d(2, 4), 
+        index=['b', 'a'],
+        columns=pdi.from_dict({'K': ('B', 'A'), 
+                               'L': ('D', 'C')})),    # 1Lx2L
+    pd.DataFrame(
+        range2d(4, 4), 
+        index=pdi.from_dict({'k': ('b', 'a'), 
+                             'l': ('d', 'c')}),
+        columns=pdi.from_dict({'K': ('B', 'A'), 
+                               'L': ('D', 'C')})),    # 2Lx2L
+    # 3L
+    pd.DataFrame(
+        range2d(8, 2), 
+        index=pdi.from_dict({'k': ('b', 'a'), 
+                             'l': ('d', 'c'),
+                             'm': ('f', 'e')}),
+        columns=['B', 'A']),                          # 3Lx1L
+    
+    pd.DataFrame(
+        range2d(2, 8), 
+        index=['b', 'a'],                            
         columns=pdi.from_dict({'K': ('B', 'A'), 
                                'L': ('D', 'C'),
-                               'M': ('F', 'E')}), 
-        index=['b', 'a'])
-    for i in range(3):
-        df = df0.copy()
-        old_index = df.columns.values.tolist()
-        lock_order(df, level=i, axis=1)
-        assert isinstance(df.columns.get_level_values(i), pd.CategoricalIndex)
-        assert df.columns.values.tolist() == old_index
-        
-    df = df0.copy()
-    old_index = df.index.values.tolist()
-    lock_order(df, axis=0)
-    assert isinstance(df.index, pd.CategoricalIndex)
-    assert df.index.values.tolist() == old_index
+                               'M': ('F', 'E')})),    # 1Lx3L  
+    pd.DataFrame(
+        range2d(8, 4), 
+        index=pdi.from_dict({'k': ('b', 'a'), 
+                             'l': ('d', 'c'),
+                             'm': ('f', 'e')}),
+        columns=pdi.from_dict({'K': ('B', 'A'), 
+                               'L': ('D', 'C')})),    # 3Lx2L
 
+    pd.DataFrame(
+        range2d(4, 8), 
+        index=pdi.from_dict({'k': ('b', 'a'), 
+                             'l': ('d', 'c')}),
+        columns=pdi.from_dict({'K': ('B', 'A'), 
+                               'L': ('D', 'C'),
+                               'M': ('F', 'E')})),    # 2Lx3L
+    pd.DataFrame(
+        range2d(8, 8), 
+        index=pdi.from_dict({'k': ('b', 'a'), 
+                             'l': ('d', 'c'),
+                             'm': ('f', 'e')}),
+        columns=pdi.from_dict({'K': ('B', 'A'), 
+                               'L': ('D', 'C'),
+                               'M': ('F', 'E')})),    # 3Lx3L
+])
+def test_lock_order(df0):
+#    if df0.values.shape == (4, 4):
+#        import ipdb; ipdb.set_trace()
+        
+    # per level
+    check_per_level(df0, 'index')
+    check_per_level(df0, 'columns')
+    
+    # axis=0
+    df = lock_order(df0, axis=0, inplace=False)
+    check_all_categorical(df.index)
+    check_none_categorical(df.columns)
+    check_same_labels(df, df0)
+    
+    # axis=1
+    df = lock_order(df0, axis=1, inplace=False)
+    check_none_categorical(df.index)
+    check_all_categorical(df.columns)
+    check_same_labels(df, df0)
+    
+    # axis=None
+    df = lock_order(df0, inplace=False)
+    check_all_categorical(df.index)
+    check_all_categorical(df.columns)
+    check_same_labels(df, df0)
+    
 
 def test_get_categories():
     df = pd.DataFrame(
