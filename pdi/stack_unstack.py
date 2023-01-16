@@ -14,11 +14,12 @@ def pairwise(iterable):
 
 def process(chunks):
     def f(x):
-        if len(x)>1:
+        if len(x) > 1:
             for a, b in pairwise(x):
                 d[b].add(a)
         else:
             d[x[0]]
+
     d = defaultdict(oset)
     for chunk in chunks:
         f(chunk)
@@ -72,7 +73,7 @@ def toposort_flatten(data, sort=True):
 
 def stack(df, level=-1, dropna=True):
     n = df.columns.nlevels
-    if n == 1:      # nothing to be done
+    if n == 1:  # nothing to be done
         return df.stack(level, dropna=dropna)
     level_num = df.columns._get_level_number(level)
     fr = df.columns.to_frame(index=False)
@@ -81,8 +82,8 @@ def stack(df, level=-1, dropna=True):
     chunks = oset()
     for k, v in fr.groupby(others, sort=False):
         others_chunks.add(k)
-        chunks.add(tuple(v.iloc[:,level_num].tolist()))
-    d = process(chunks); d
+        chunks.add(tuple(v.iloc[:, level_num].tolist()))
+    d = process(chunks)
     stacked = toposort_flatten(d, sort=False)
     df1 = df.stack(level, dropna=dropna)
     df1 = df1.reindex(others_chunks, axis=1)
@@ -95,7 +96,7 @@ def stack(df, level=-1, dropna=True):
 
 def unstack(df, level=-1, fill_value=False):
     n = df.index.nlevels
-    if n == 1:      # nothing to be done
+    if n == 1:  # nothing to be done
         return df.unstack(level, fill_value=fill_value)
     level_num = df.index._get_level_number(level)
     fr = df.index.to_frame(index=False)
@@ -104,8 +105,8 @@ def unstack(df, level=-1, fill_value=False):
     chunks = oset()
     for k, v in fr.groupby(others, sort=False):
         others_chunks.add(k)
-        chunks.add(tuple(v.iloc[:,level_num].tolist()))
-    d = process(chunks); d
+        chunks.add(tuple(v.iloc[:, level_num].tolist()))
+    d = process(chunks)
     stacked = toposort_flatten(d, sort=False)
     df1 = df.unstack(level, fill_value=fill_value)
     df1 = df1.reindex(others_chunks)
