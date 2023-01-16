@@ -17,6 +17,7 @@ setuptools.setup(
     install_requires=[
         'pandas',
         'bs4',              # for patch_series
+        'lxml',             # for bs4 
         'IPython',          # for sidebyside
     ],
     packages=['pdi'],
