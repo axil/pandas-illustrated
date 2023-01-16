@@ -3,7 +3,6 @@
 import pandas as pd
 import pandas.io.formats.format as fmt
 
-
 def _fix_html(html):
     from bs4 import BeautifulSoup
 
@@ -24,7 +23,26 @@ def patch_series(footer=True):
     """
 
     def get_footer(s):
-        repr_params = fmt.get_series_repr_params()
+        if hasattr(fmt, 'get_series_repr_params'):
+            repr_params = fmt.get_series_repr_params()
+        else:
+            from pandas._config import get_option
+            from shutil import get_terminal_size
+            
+            width, height = get_terminal_size()
+            repr_params = dict(
+                max_rows = (
+                    height
+                    if get_option("display.max_rows") == 0
+                    else get_option("display.max_rows")
+                ),
+                min_rows = (
+                    height
+                    if get_option("display.max_rows") == 0
+                    else get_option("display.min_rows")
+                ),
+                length = get_option("display.show_dimensions"),
+            )
         msg = fmt.SeriesFormatter(s, **repr_params)._get_footer()
         return f'<pre style="margin-top:3px">{msg}</pre>'
 
