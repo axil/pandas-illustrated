@@ -351,7 +351,23 @@ def test_from_product():
     check_all_categorical(mi)
 
 
-def test_vis_lock():
+def test_vis_lock1():
+    df =  pd.DataFrame(
+            range2d(3, 3), index=["c", "b", "a"], columns=["C", "B", "A"]
+    )  # 1Lx1L
+    df.index.name = 'k'
+    df.columns.name = 'K'
+
+    df1 = lock_order(df, axis=0, level=0, inplace=False)
+    df2 = pdi.vis_lock(df1)
+    assert [df2.index.name, df2.columns.name] == ['k✓', 'K']
+
+    df1 = lock_order(df, axis=1, level=0, inplace=False)
+    df2 = pdi.vis_lock(df1)
+    assert [df2.index.name, df2.columns.name] == ['k', 'K✓']
+
+
+def test_vis_lock2():
     df = pd.DataFrame(
             range2d(4, 4),
             index=pdi.from_dict(
