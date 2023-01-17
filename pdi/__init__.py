@@ -9,11 +9,17 @@ from pandas._typing import (
     Axis,
     Scalar,
 )
+from pandas.core.dtypes.common import (
+    is_list_like,
+    is_scalar,
+)
+from pandas.core.indexes.multi import _require_listlike
 from pandas.core.generic import NDFrame
 try:
     from pandas._typing import NDFrameT
 except:  # pandas < 1.4
     from pandas._typing import FrameOrSeries
+from pandas._libs import lib
 
 from .drop import drop
 from .visuals import patch_series, unpatch_series, sidebyside
@@ -248,8 +254,14 @@ class Mi:
     def __init__(self, df):
         self.df = df
 
+    def __repr__(self):
+        return 'Row indexer'
+
     def __getitem__(self, args):
         return self.df.loc[args, :]
+
+    def __setitem__(self, k, v):
+        self.df.loc[k, :] = v
 
     def __call__(self, *args, **kwargs):
         levels, keys = tuple(kwargs.keys()), tuple(kwargs.values())
@@ -265,8 +277,14 @@ class Co:
     def __init__(self, df):
         self.df = df
 
+    def __repr__(self):
+        return 'Column indexer'
+
     def __getitem__(self, args):
         return self.df.loc[:, args]
+
+    def __setitem__(self, k, v):
+        self.df.loc[:, k] = v
 
     def __call__(self, *args, **kwargs):
         levels, keys = tuple(kwargs.keys()), tuple(kwargs.values())
@@ -285,10 +303,16 @@ def patch_dataframe():
 
 def from_dict(d):
     """
+    dict with a single item => Index from this item
     dict of lists => MultiIndex from values
     dict of tuples => MultiIndex from product
     """
-    if d and isinstance(next(iter(d.values())), tuple):
+    if not isinstance(d, dict):
+        raise TypeError('Argument of `from_dict` must be a dict.')
+    if len(d) == 1:
+        k, v = next(iter(d.items()))
+        return pd.Index(v, name=k)
+    elif d and isinstance(next(iter(d.values())), tuple):
         return pd.MultiIndex.from_product(list(d.values()), names=d.keys())
     else:
         return pd.MultiIndex.from_tuples(zip(*d.values()), names=d.keys())
@@ -299,3 +323,81 @@ def swap_levels(obj: NDFrameT, i: Axis = -2, j: Axis = -1, axis: Axis = 0, sort=
     if sort:
         df1.sort_index(axis=axis, inplace=True)
     return df1
+
+def get_level(mi, level):
+    """
+    Returns a complete level of a MultiIndex (alias to .get_level_values)
+    """
+
+    return mi.get_level_values(level=level)
+
+def set_level(mi, level, labels, name=lib.no_default, inplace=True):
+    """
+    Replaces a complete level of a MultiIndex
+
+    level :
+        Positional index or name of the level
+
+    labels :
+        One of: 
+           - Index, attaches as is
+           - Scalar, broadcasts to match MultiIndex length and attaches
+           - list/NumPy array sized as proper divisor of MultiIndex length: broadcasts
+           to match MultiIndex length and attaches
+           - list/NumPy array of size equal to MultiIndex: builds and attaches
+
+    name :
+        New name of the level. If not specified:
+          - keeps original name if `level` is a list or array or 
+          - keeps name of the `level` if `level` is an Index.
+
+    inplace : 
+        Return a fresh copy or modify inplace. If mi is a simple pd.Index 
+        (=not a MultiIndex) always returns a copy because the Index is immutable.
+
+    verify_integrity :
+        Performs some sanity checks
+    """
+    if not isinstance(mi, pd.MultiIndex):
+        raise TypeError(f"The first argument must be a MultiIndex, not {type(mi)}.")
+    
+    level_num = mi._get_level_number(level)
+    
+    if isinstance(labels, pd.Index):
+        index = labels
+        if name is not lib.no_default:
+            index.name = name
+    else:
+        n = len(mi)
+        if is_scalar(labels):
+            labels = [labels] * n
+        elif n == len(labels):
+            pass
+        elif n % len(labels) == 0:
+            labels = list(labels) * (n // len(labels))
+        else:
+            raise ValueError(f"len(labels)={len(labels)}; must be 1, {n} or a proper divisor of {n}")
+        index = pd.Index(labels)
+        if name is not lib.no_default:
+            index.name = name
+        else:
+            index.name = mi.names[level_num]
+    
+    levels = []
+    for i in range(mi.nlevels):
+        if i == level_num:
+            levels.append(index)
+        else:
+            levels.append(mi.get_level_values(i))
+
+    idx = pd.MultiIndex.from_arrays(levels)
+
+    if inplace:
+        mi._reset_identity()
+        mi._names = idx._names
+        mi._levels = idx._levels
+        mi._codes = idx._codes
+        mi.sortorder = idx.sortorder
+        mi._reset_cache()
+    else:
+        return idx

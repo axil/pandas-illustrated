@@ -8,6 +8,7 @@ import pandas as pd
 import pdi
 from pdi import lock_order, from_product
 from pdi.categoricals import _get_categories
+from pdi.testing import range2d
 
 
 def vi(s):
@@ -79,10 +80,6 @@ def check_per_level(df0, axis="index"):
             else:
                 assert not is_categorical(index, j), (i, j)
         check_same_labels(df, df0)
-
-
-def range2d(n, m):
-    return np.arange(1, n * m + 1).reshape(n, m)
 
 
 def test_types():

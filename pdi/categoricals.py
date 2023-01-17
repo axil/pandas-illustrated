@@ -28,7 +28,7 @@ def _get_categories(mi, level, ax):
             else:
                 if not np.all(seq.values == v.iloc[:, level].values):
                     raise ValueError(
-                        f"Missing label(s) in level {level} of {ax}. "
+                        f"Non-regular MultiIndex structure at level {level} of {ax}. "
                         "Use lock_order(..., categories=[list of categories])."
                     )
         categories = seq.unique()
