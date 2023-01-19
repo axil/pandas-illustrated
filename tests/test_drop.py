@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 
 from pdi import drop
+from pdi.drop import _drop
+from pdi.testing import gen_df
 
 
 def vi(s):
@@ -85,11 +87,7 @@ def test_columns():
 
 
 def test_multiindex1_index():
-    df = pd.DataFrame(
-        np.arange(1, 9).reshape(4, 2),
-        index=pd.MultiIndex.from_product([list("ab"), list("cd")]),
-        columns=list("AB"),
-    )
+    df = gen_df(2, 1)
     df1 = drop(df, index=("a", "d"))
     assert vic(df1) == (
         [[1, 2], [5, 6], [7, 8]],
@@ -101,11 +99,7 @@ def test_multiindex1_index():
 
 
 def test_multiindex2_columns():
-    df = pd.DataFrame(
-        np.arange(1, 9).reshape(2, 4),
-        index=list("ab"),
-        columns=pd.MultiIndex.from_product([list("AB"), list("CD")]),
-    )
+    df = gen_df(1, 2)
     df1 = drop(df, columns=("A", "D"))
     assert vic(df1) == (
         [[1, 3, 4], [5, 7, 8]],
@@ -115,6 +109,13 @@ def test_multiindex2_columns():
     df1 = drop(df, columns=[("A", "D"), ("B", "C")])
     assert vic(df1) == ([[1, 4], [5, 8]], ["a", "b"], [("A", "C"), ("B", "D")])
 
+def test_raises():
+    df = gen_df(1, 2)
+    with pytest.raises(TypeError):
+        _drop(df, items="A", like="B", axis=1)
+    
+    with pytest.raises(TypeError):
+        drop(df, columns="A", columns_re="B")
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])
