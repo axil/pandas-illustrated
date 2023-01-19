@@ -25,7 +25,7 @@ def patch_series(footer=True):
     def get_footer(s):
         if hasattr(fmt, 'get_series_repr_params'):
             repr_params = fmt.get_series_repr_params()
-        else:
+        else:       # pandas < 1.4
             from pandas._config import get_option
             from shutil import get_terminal_size
             

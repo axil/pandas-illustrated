@@ -28,14 +28,14 @@ def _get_categories(mi, level, ax):
             else:
                 if not np.all(seq.values == v.iloc[:, level].values):
                     raise ValueError(
-                        f"Non-regular MultiIndex structure at level {level} of {ax}. "
+                        f"Non-regular MultiIndex structure at level {level} of the {ax}. "
                         "Use lock_order(..., categories=[list of categories])."
                     )
         categories = seq.unique()
     return categories
 
 
-def lock_order(obj, level=None, axis=None, categories=None, inplace=True):
+def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
     """
     Converts Index or level(s) MultiIndex of DataFrame/Series/Index/MultiIndex to Categoricals.
     Requires either:
@@ -56,7 +56,7 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=True):
 
     inplace : bool
         return a copy (False) or change in place (True);
-        ignored for (multi)index: it is immutable, so
+        must be False (multi)index: it is immutable, so
         always return a copy.
 
     For example:
@@ -92,19 +92,22 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=True):
 
     if inplace is False:
         obj = obj.copy()
+
     if isinstance(obj, pd.Series):
         mis = {"index": obj.index}
     elif isinstance(obj, pd.Index):
-        inplace = False
+        if inplace is not False:
+            inplace = True
+            obj = obj.copy()
         mis = {"index": obj}
-    elif axis in (0, "index"):
-        mis = {"index": obj.index}
-    elif axis in (1, "columns"):
-        mis = {"columns": obj.columns}
-    elif axis is None:
-        mis = {"index": obj.index, "columns": obj.columns}
+    elif isinstance(obj, pd.DataFrame):
+        if axis is not None:
+            ax, mi = obj._get_axis_name(axis), obj._get_axis(axis)
+            mis = {ax: mi}
+        else:
+            mis = {"index": obj.index, "columns": obj.columns}
     else:
-        raise ValueError('"axis" must be one of [0, 1, "index", "columns"]')
+        raise TypeError(f"The first argument must a DataFrame, a Series or a MultiIndex, not {type(mi)}.")
 
     for ax, mi in mis.items():
         if mi.nlevels == 1:
@@ -136,7 +139,15 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=True):
             new_mi = pd.MultiIndex.from_arrays(indices)
         #    return df.reindex(index=new_mi, copy=False)     # it's better to do it in-place
         if isinstance(obj, pd.Index):
-            obj = new_mi
+#            if inplace is True:
+#                obj._reset_identity()
+#                obj._names = new_mi._names
+#                obj._levels = new_mi._levels
+#                obj._codes = new_mi._codes
+#                obj.sortorder = new_mi.sortorder
+#                obj._reset_cache()
+#            else:
+             obj = new_mi
         else:
             setattr(obj, ax, new_mi)
     if inplace is False:

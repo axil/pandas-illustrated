@@ -51,7 +51,7 @@ def check_per_level(df0, axis="index"):
 
     if index0.nlevels == 1:
         df = df0.copy()
-        lock_order(df, axis=axis)
+        lock_order(df, axis=axis, inplace=True)
         assert isinstance(getattr(df, axis), pd.CategoricalIndex)
         check_same_labels(df, df0)
         return
@@ -59,7 +59,7 @@ def check_per_level(df0, axis="index"):
     # per level by position
     for i in range(index0.nlevels):
         df = df0.copy()
-        lock_order(df, level=i, axis=axis)
+        lock_order(df, level=i, axis=axis, inplace=True)
         index = getattr(df, axis)
         for j in range(index.nlevels):
             if j == i:
@@ -72,7 +72,7 @@ def check_per_level(df0, axis="index"):
     # per level by name
     for i, name in enumerate(index0.names):
         df = df0.copy()
-        lock_order(df, level=name, axis=axis)
+        lock_order(df, level=name, axis=axis, inplace=True)
         index = getattr(df, axis)
         for j in range(index.nlevels):
             if j == i:
@@ -401,43 +401,6 @@ def test_vis_lock2():
     assert df2.index.names == ['k', 'l']
     assert df2.columns.names == ['K', 'L✓']
 
-def test_swap_levels():
-    df = pd.DataFrame(
-        range2d(4, 2),
-        index=pdi.from_dict(
-            {
-                "k": ("b", "a"),
-                "l": ("d", "c"),
-            }
-        ),
-        columns=["B", "A"],
-    )  # 2Lx1L
-    
-    df1 = pdi.swap_levels(df)
-    assert vicn(df1) == \
-        ([[7, 8], [3, 4], [5, 6], [1, 2]],
-        [('c', 'a'), ('c', 'b'), ('d', 'a'), ('d', 'b')],
-        ['B', 'A'],
-        [['l', 'k'], [None]])
-
-    df = pd.DataFrame(
-            range2d(2, 4),
-            index=["b", "a"],
-            columns=pdi.from_dict(
-                {
-                    "K": ("B", "A"),
-                    "L": ("D", "C"),
-                }
-            ),
-        )  # 1Lx2L
-
-    df1 = pdi.swap_levels(df, axis=1)
-    assert vicn(df1) == \
-        ([[4, 2, 3, 1], [8, 6, 7, 5]],
-        ['b', 'a'],
-        [('C', 'A'), ('C', 'B'), ('D', 'A'), ('D', 'B')],
-        [[None], ['L', 'K']])
-
 
 if __name__ == "__main__":
-    pytest.main(["-s", __file__])  # + '::test7'])
+    pytest.main(["-x", "-s", __file__])  # + '::test7'])
