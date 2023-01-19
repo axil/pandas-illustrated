@@ -500,9 +500,9 @@ def test_vis_lock2(axis, level, names, cats, res_cats):
     assert df2.index.names == names[0]
     assert df2.columns.names == names[1]
     for i in range(4):
-        axis, level = divmod(i, 2)
+        _axis, _level = divmod(i, 2)
         if res_cats[i] is not None:
-            df2._get_axis(axis).levels[level].categories.tolist() == res_cats[i]
+            df2._get_axis(_axis).levels[_level].categories.tolist() == res_cats[i]
     assert vicn(df) == orig
 
     #   - inplace=True
@@ -518,9 +518,9 @@ def test_vis_lock2(axis, level, names, cats, res_cats):
     assert df2.index.names == names[0]
     assert df2.columns.names == names[1]
     for i in range(4):
-        axis, level = divmod(i, 2)
+        _axis, _level = divmod(i, 2)
         if res_cats[i] is not None:
-            df2._get_axis(axis).levels[level].categories.tolist() == res_cats[i]
+            df2._get_axis(_axis).levels[_level].categories.tolist() == res_cats[i]
 
 
 def test_raises():
@@ -536,6 +536,7 @@ def test_raises():
 
 if __name__ == "__main__":
     pytest.main(["-x", "-s", __file__])# + '::test_vis_lock2'])
+#    pytest.main(["-x", "-s", __file__ + '::test_vis_lock2'])
 #    pytest.main(["-x", "-s", __file__ + '::test_per_axis_inplace'])
 #    pytest.main(["-x", "-s", __file__ + '::test_per_axis_not_inplace'])
     #input()
