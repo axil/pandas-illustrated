@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 
 import pdi
-from pdi import lock_order, from_product
+from pdi import lock_order, from_product, from_dict
 from pdi.categoricals import _get_categories
-from pdi.testing import range2d
+from pdi.testing import range2d, gen_df
 
 
 def vi(s):
@@ -29,6 +29,12 @@ def vicn(s):
 def is_categorical(index, level):
     return isinstance(index.get_level_values(level), pd.CategoricalIndex)
 
+def get_categories(index, level):
+    if index.nlevels == 1:
+        return index.categories.tolist()
+    else:
+        return index.levels[level].categories.tolist()
+
 
 def check_all_categorical(index):
     for i in range(index.nlevels):
@@ -45,187 +51,182 @@ def check_same_labels(df, df0):
     assert df.index.values.tolist() == df0.index.values.tolist()
 
 
-def check_per_level(df0, axis="index"):
-    other_axis = {"index": "columns", "columns": "index"}
+CAT = {
+    'index':
+    [
+        ['b', 'a'],
+        ['d', 'c'],
+        ['f', 'e'],
+    ], 
+    'columns':
+    [
+        ['B', 'A'],
+        ['D', 'C'],
+        ['F', 'E'],
+    ]
+}
+
+DF = []
+DF_AXIS = []
+for i in range(1, 4):
+    for j in range(i, 4):
+        df = gen_df(i, j, False)
+        DF.append(df)
+        DF_AXIS.append((df, 'columns'))
+
+OTHER = {"index": "columns", "columns": "index"}
+
+@pytest.mark.parametrize("df0, axis", DF_AXIS)
+def test_per_level_inplace(df0, axis):
     index0 = getattr(df0, axis)
+    orig = vicn(df0)
 
     if index0.nlevels == 1:
         df = df0.copy()
         lock_order(df, axis=axis, inplace=True)
-        assert isinstance(getattr(df, axis), pd.CategoricalIndex)
-        check_same_labels(df, df0)
+        mi = getattr(df, axis)
+        assert isinstance(mi, pd.CategoricalIndex)
+        assert mi.categories.tolist() == CAT[axis][0]
+        assert vicn(df) == orig
         return
 
     # per level by position
     for i in range(index0.nlevels):
         df = df0.copy()
         lock_order(df, level=i, axis=axis, inplace=True)
-        index = getattr(df, axis)
-        for j in range(index.nlevels):
+        mi = getattr(df, axis)
+        for j in range(mi.nlevels):
             if j == i:
-                assert is_categorical(index, j), (i, j)
+                assert is_categorical(mi, j), (i, j)
+                assert mi.levels[i].categories.tolist() == CAT[axis][j]
             else:
-                assert not is_categorical(index, j), (i, j)
-        check_none_categorical(getattr(df, other_axis[axis]))
-        check_same_labels(df, df0)
+                assert not is_categorical(mi, j), (i, j)
+        check_none_categorical(getattr(df, OTHER[axis]))
+        assert vicn(df) == orig
 
     # per level by name
     for i, name in enumerate(index0.names):
         df = df0.copy()
         lock_order(df, level=name, axis=axis, inplace=True)
-        index = getattr(df, axis)
-        for j in range(index.nlevels):
+        mi = getattr(df, axis)
+        for j in range(mi.nlevels):
             if j == i:
-                assert is_categorical(index, j), (i, j)
+                assert is_categorical(mi, j), (i, j)
+                assert mi.levels[i].categories.tolist() == CAT[axis][j]
             else:
-                assert not is_categorical(index, j), (i, j)
-        check_same_labels(df, df0)
+                assert not is_categorical(mi, j), (i, j)
+        check_none_categorical(getattr(df, OTHER[axis]))
+        assert vicn(df) == orig
 
+@pytest.mark.parametrize("df0, axis", DF_AXIS)
+def test_per_level_not_inplace(df0, axis):
+    OTHER = {"index": "columns", "columns": "index"}
+    index0 = getattr(df0, axis)
+    orig = vicn(df0)
 
-def test_types():
-    with pytest.raises(ValueError):
-        pdi.lock_order('hmm')
-    
+    if index0.nlevels == 1:
+        df = df0.copy()
+        df1 = lock_order(df, axis=axis, inplace=False)
+        mi = getattr(df1, axis)
+        assert isinstance(mi, pd.CategoricalIndex)
+        assert mi.categories.tolist() == CAT[axis][0]
+        assert vicn(df1) == orig
+        assert vicn(df) == orig
+        check_none_categorical(getattr(df, OTHER[axis]))
+        check_none_categorical(df.index)
+        check_none_categorical(df.columns)
+        return
 
-@pytest.mark.parametrize(
-    "df0",
-    [
-        # 1L
-        pd.DataFrame(
-            range2d(3, 3), index=["c", "b", "a"], columns=["C", "B", "A"]
-        ),  # 1Lx1L
-        # 2L
-        pd.DataFrame(
-            range2d(4, 2),
-            index=pdi.from_dict(
-                {
-                    "k": ("b", "a"),
-                    "l": ("d", "c"),
-                }
-            ),
-            columns=["B", "A"],
-        ),  # 2Lx1L
-        pd.DataFrame(
-            range2d(2, 4),
-            index=["b", "a"],
-            columns=pdi.from_dict(
-                {
-                    "K": ("B", "A"),
-                    "L": ("D", "C"),
-                }
-            ),
-        ),  # 1Lx2L
-        pd.DataFrame(
-            range2d(4, 4),
-            index=pdi.from_dict(
-                {
-                    "k": ("b", "a"),
-                    "l": ("d", "c"),
-                }
-            ),
-            columns=pdi.from_dict(
-                {
-                    "K": ("B", "A"),
-                    "L": ("D", "C"),
-                }
-            ),
-        ),  # 2Lx2L
-        # 3L
-        pd.DataFrame(
-            range2d(8, 2),
-            index=pdi.from_dict(
-                {
-                    "k": ("b", "a"),
-                    "l": ("d", "c"),
-                    "m": ("f", "e"),
-                }
-            ),
-            columns=["B", "A"],
-        ),  # 3Lx1L
-        pd.DataFrame(
-            range2d(2, 8),
-            index=["b", "a"],
-            columns=pdi.from_dict(
-                {
-                    "K": ("B", "A"),
-                    "L": ("D", "C"),
-                    "M": ("F", "E"),
-                }
-            ),
-        ),  # 1Lx3L
-        pd.DataFrame(
-            range2d(8, 4),
-            index=pdi.from_dict(
-                {
-                    "k": ("b", "a"),
-                    "l": ("d", "c"),
-                    "m": ("f", "e"),
-                }
-            ),
-            columns=pdi.from_dict(
-                {
-                    "K": ("B", "A"),
-                    "L": ("D", "C"),
-                }
-            ),
-        ),  # 3Lx2L
-        pd.DataFrame(
-            range2d(4, 8),
-            index=pdi.from_dict(
-                {
-                    "k": ("b", "a"),
-                    "l": ("d", "c"),
-                }
-            ),
-            columns=pdi.from_dict(
-                {
-                    "K": ("B", "A"),
-                    "L": ("D", "C"),
-                    "M": ("F", "E"),
-                }
-            ),
-        ),  # 2Lx3L
-        pd.DataFrame(
-            range2d(8, 8),
-            index=pdi.from_dict(
-                {
-                    "k": ("b", "a"),
-                    "l": ("d", "c"),
-                    "m": ("f", "e"),
-                }
-            ),
-            columns=pdi.from_dict(
-                {
-                    "K": ("B", "A"),
-                    "L": ("D", "C"),
-                    "M": ("F", "E"),
-                }
-            ),
-        ),  # 3Lx3L
-    ],
-)
-def test_lock_order(df0):
-    # per level
-    check_per_level(df0, "index")
-    check_per_level(df0, "columns")
+    # per level by position
+    for i in range(index0.nlevels):
+        df = df0.copy()
+        df1 = lock_order(df, level=i, axis=axis, inplace=False)
+        mi = getattr(df1, axis)
+        for j in range(mi.nlevels):
+            if j == i:
+                assert is_categorical(mi, j), i
+                assert get_categories(mi, j) == CAT[axis][j], i
+            else:
+                assert not is_categorical(mi, j), (i, j)
+        check_none_categorical(getattr(df1, OTHER[axis]))
+        assert vicn(df1) == orig
+        assert vicn(df) == orig
+        check_none_categorical(df.index)
+        check_none_categorical(df.columns)
 
-    # axis=0
-    df = lock_order(df0, axis=0, inplace=False)
-    check_all_categorical(df.index)
-    check_none_categorical(df.columns)
-    check_same_labels(df, df0)
+    # per level by name
+    for i, name in enumerate(index0.names):
+        df = df0.copy()
+        df1 = lock_order(df, level=name, axis=axis, inplace=False)
+        mi = getattr(df1, axis)
+        for j in range(mi.nlevels):
+            if j == i:
+                assert is_categorical(mi, j), j
+                assert get_categories(mi, j) == CAT[axis][j], i
+            else:
+                assert not is_categorical(mi, j), (i, j)
+        check_none_categorical(getattr(df1, OTHER[axis]))
+        assert vicn(df1) == orig
+        assert vicn(df) == orig
+        check_none_categorical(df.index)
+        check_none_categorical(df.columns)
 
-    # axis=1
-    df = lock_order(df0, axis=1, inplace=False)
+@pytest.mark.parametrize("df0, axis", DF_AXIS)
+def test_per_axis_not_inplace(df0, axis):
+    orig = vicn(df0)
+
+    df = df0.copy()
+    df1 = lock_order(df, axis=axis, inplace=False)
+    mi = getattr(df1, axis)
+    for i in range(mi.nlevels):
+        assert is_categorical(mi, i), i
+        assert get_categories(mi, i) == CAT[axis][i], i
+    check_none_categorical(getattr(df, OTHER[axis]))
+    assert vicn(df1) == orig
+    assert vicn(df) == orig
     check_none_categorical(df.index)
-    check_all_categorical(df.columns)
-    check_same_labels(df, df0)
+    check_none_categorical(df.columns)
+    
+@pytest.mark.parametrize("df0, axis", DF_AXIS)
+def test_per_axis_inplace(df0, axis):
+    orig = vicn(df0)
 
-    # axis=None
-    df = lock_order(df0, inplace=False)
-    check_all_categorical(df.index)
-    check_all_categorical(df.columns)
-    check_same_labels(df, df0)
+    df = df0.copy()
+    lock_order(df, axis=axis, inplace=True)
+    mi = getattr(df, axis)
+    for i in range(mi.nlevels):
+        assert is_categorical(mi, i), i
+        assert get_categories(mi, i) == CAT[axis][i], i
+    check_none_categorical(getattr(df, OTHER[axis]))
+    assert vicn(df) == orig
+    
+@pytest.mark.parametrize("df0", DF)
+def test_both_axes_inplace(df0):
+    orig = vicn(df0)
+
+    df = df0.copy()
+    lock_order(df, inplace=True)
+    for axis in 'index', 'columns':
+        mi = getattr(df, axis)
+        for i in range(mi.nlevels):
+            assert is_categorical(mi, i), i
+            assert get_categories(mi, i) == CAT[axis][i], i
+    assert vicn(df) == orig
+    
+@pytest.mark.parametrize("df0", DF)
+def test_both_axes_not_inplace(df0):
+    orig = vicn(df0)
+
+    df = df0.copy()
+    df1 = lock_order(df, inplace=False)
+    for axis in 'index', 'columns':
+        mi = getattr(df1, axis)
+        for i in range(mi.nlevels):
+            assert is_categorical(mi, i), i
+            assert get_categories(mi, i) == CAT[axis][i], i
+        check_none_categorical(getattr(df, axis))
+    assert vicn(df1) == orig
+    assert vicn(df) == orig
 
 
 def test_get_categories():
@@ -348,24 +349,87 @@ def test_from_product():
     check_all_categorical(mi)
 
 
-def test_vis_lock1():
-    df =  pd.DataFrame(
-            range2d(3, 3), index=["c", "b", "a"], columns=["C", "B", "A"]
-    )  # 1Lx1L
-    df.index.name = 'k'
-    df.columns.name = 'K'
+@pytest.mark.parametrize("axis, res_names, index_cats, columns_cats", [
+    (0, ['k✓', 'K'], ['c', 'b', 'a'], None),
+    (1, ['k', 'K✓'], None, ['C', 'B', 'A']),
+    (None, ['k✓', 'K✓'], ['c', 'b', 'a'], ['C', 'B', 'A']),
+])
+def test_vis_lock1(axis, res_names, index_cats, columns_cats):
+    # * auto categories
+    df0 =  pd.DataFrame(
+            range2d(3, 3), 
+            index=from_dict({'k': ["c", "b", "a"]}), 
+            columns=from_dict({'K': ["C", "B", "A"]}),
+    )
+    orig = vicn(df0)
 
-    df1 = lock_order(df, axis=0, level=0, inplace=False)
+    #   - inplace=False
+    df = df0.copy()
+    df1 = lock_order(df, axis=axis, inplace=False)
     df2 = pdi.vis_lock(df1)
-    assert [df2.index.name, df2.columns.name] == ['k✓', 'K']
-
-    df1 = lock_order(df, axis=1, level=0, inplace=False)
+    assert [df2.index.name, df2.columns.name] == res_names
+    if index_cats is not None:
+        assert df2.index.categories.tolist() == index_cats 
+    if columns_cats is not None:
+        assert df2.columns.categories.tolist() == columns_cats
+    assert vicn(df) == orig
+    
+    #   - inplace=True
+    df = df0.copy()
+    lock_order(df, axis=axis, inplace=True)
+    df2 = pdi.vis_lock(df)
+    assert [df2.index.name, df2.columns.name] == res_names
+    if index_cats is not None:
+        assert df2.index.categories.tolist() == index_cats 
+    if columns_cats is not None:
+        assert df2.columns.categories.tolist() == columns_cats
+    
+    # manual categories
+    df0 =  pd.DataFrame(
+            range2d(3, 3), 
+            index=from_dict({'k': ["a", "c", "b"]}), 
+            columns=from_dict({'K': ["A", "C", "B"]}),
+    )
+    orig = vicn(df0)
+    
+    cats = ['c', 'b', 'a'], ['C', 'B', 'A']
+    categories = {None: cats, 0: cats[0], 1: cats[1]}
+    
+    #   - inplace=False
+    df = df0.copy()
+    df1 = lock_order(df, axis=axis, categories=categories[axis], inplace=False)
     df2 = pdi.vis_lock(df1)
-    assert [df2.index.name, df2.columns.name] == ['k', 'K✓']
+    assert [df2.index.name, df2.columns.name] == res_names
+    if index_cats is not None:
+        assert df2.index.categories.tolist() == index_cats 
+    if columns_cats is not None:
+        assert df2.columns.categories.tolist() == columns_cats 
+    assert vicn(df) == orig
+    
+    #   - inplace=True
+    df = df0.copy()
+    lock_order(df, axis=axis, categories=categories[axis], inplace=True)
+    df2 = pdi.vis_lock(df)
+    assert [df2.index.name, df2.columns.name] == res_names
+    if index_cats is not None:
+        assert df2.index.categories.tolist() == index_cats 
+    if columns_cats is not None:
+        assert df2.columns.categories.tolist() == columns_cats
 
+C = (['b', 'a'], ['d', 'c'], ['B', 'A'], ['D', 'C'])
 
-def test_vis_lock2():
-    df = pd.DataFrame(
+@pytest.mark.parametrize("axis, level, names, cats, res_cats", [
+    (0, 0, (['k✓', 'l'], ['K', 'L']), C[0], (C[0], None, None, None)),
+    (0, 1, (['k', 'l✓'], ['K', 'L']), C[1], (None, C[1], None, None)),
+    (1, 0, (['k', 'l'], ['K✓', 'L']), C[2], (None, None, C[2], None)),
+    (1, 1, (['k', 'l'], ['K', 'L✓']), C[3], (None, None, None, C[3])),
+    (0, None, (['k✓', 'l✓'], ['K', 'L']), C[:2], (C[0], C[1], None, None)),
+    (1, None, (['k', 'l'], ['K✓', 'L✓']), C[2:], (None, None, C[2], C[3])),
+    (None, None, (['k✓', 'l✓'], ['K✓', 'L✓']), [C[:2], C[2:]], C),
+])
+def test_vis_lock2(axis, level, names, cats, res_cats):
+    # * auto categories
+    df0 = pd.DataFrame(
             range2d(4, 4),
             index=pdi.from_dict(
                 {
@@ -380,27 +444,98 @@ def test_vis_lock2():
                 }
             ),
         )  # 2Lx2L
+    orig = vicn(df0)
 
-    df1 = lock_order(df, axis=0, level=0, inplace=False)
+    #   - inplace=False
+    df = df0.copy()
+    df1 = lock_order(df, axis=axis, level=level, inplace=False)
     df2 = pdi.vis_lock(df1)
-    assert df2.index.names == ['k✓', 'l']
-    assert df2.columns.names == ['K', 'L']
+    assert df2.index.names == names[0]
+    assert df2.columns.names == names[1]
+    for i in range(4):
+        _axis, _level = divmod(i, 2)
+        if res_cats[i] is not None:
+            df2._get_axis(_axis).levels[_level].categories.tolist() == res_cats[i]
+    assert vicn(df) == orig
     
-    df1 = lock_order(df, axis=0, level=1, inplace=False)
-    df2 = pdi.vis_lock(df1)
-    assert df2.index.names == ['k', 'l✓']
-    assert df2.columns.names == ['K', 'L']
+    #   - inplace=True
+    df = df0.copy()
+    lock_order(df, axis=axis, level=level, inplace=True)
+    df2 = pdi.vis_lock(df)
+    assert df2.index.names == names[0]
+    assert df2.columns.names == names[1]
+    for i in range(4):
+        _axis, _level = divmod(i, 2)
+        if res_cats[i] is not None:
+            df2._get_axis(_axis).levels[_level].categories.tolist() == res_cats[i]
     
-    df1 = lock_order(df, axis=1, level=0, inplace=False)
-    df2 = pdi.vis_lock(df1)
-    assert df2.index.names == ['k', 'l']
-    assert df2.columns.names == ['K✓', 'L']
-    
-    df1 = lock_order(df, axis=1, level=1, inplace=False)
-    df2 = pdi.vis_lock(df1)
-    assert df2.index.names == ['k', 'l']
-    assert df2.columns.names == ['K', 'L✓']
+    # * manual categories
+    df0 = pd.DataFrame(
+            range2d(4, 4),
+            index=pdi.from_dict(
+                {
+                    "k": ("a", "b"),
+                    "l": ("c", "d"),
+                }
+            ),
+            columns=pdi.from_dict(
+                {
+                    "K": ("A", "B"),
+                    "L": ("C", "D"),
+                }
+            ),
+        )  # 2Lx2L
+    orig = vicn(df0)
 
+    #   - inplace=False
+    df = df0.copy()
+    df1 = lock_order(
+            df, 
+            axis=axis,
+            level=level,
+            categories=cats,
+            inplace=False,
+    )
+    df2 = pdi.vis_lock(df1)
+    assert df2.index.names == names[0]
+    assert df2.columns.names == names[1]
+    for i in range(4):
+        axis, level = divmod(i, 2)
+        if res_cats[i] is not None:
+            df2._get_axis(axis).levels[level].categories.tolist() == res_cats[i]
+    assert vicn(df) == orig
+
+    #   - inplace=True
+    df = df0.copy()
+    lock_order(
+            df, 
+            axis=axis, 
+            level=level, 
+            categories=cats, 
+            inplace=True,
+    )
+    df2 = pdi.vis_lock(df)
+    assert df2.index.names == names[0]
+    assert df2.columns.names == names[1]
+    for i in range(4):
+        axis, level = divmod(i, 2)
+        if res_cats[i] is not None:
+            df2._get_axis(axis).levels[level].categories.tolist() == res_cats[i]
+
+
+def test_raises():
+    df = gen_df(2, 2)
+    with pytest.raises(ValueError):
+        lock_order(df, level=1)     # axis is required
+
+    with pytest.raises(ValueError):
+        lock_order(df.columns, level=1, inplace=True)  # index is immutable
+
+    with pytest.raises(TypeError):
+        lock_order(np.array([1,2,3]))   # numpy array has no index
 
 if __name__ == "__main__":
-    pytest.main(["-x", "-s", __file__])  # + '::test7'])
+    pytest.main(["-x", "-s", __file__])# + '::test_vis_lock2'])
+#    pytest.main(["-x", "-s", __file__ + '::test_per_axis_inplace'])
+#    pytest.main(["-x", "-s", __file__ + '::test_per_axis_not_inplace'])
+    #input()

@@ -37,7 +37,9 @@ def _get_categories(mi, level, ax):
 
 def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
     """
-    Converts Index or level(s) MultiIndex of DataFrame/Series/Index/MultiIndex to Categoricals.
+    Converts Index or MultiIndex level(s) of DataFrame/Series/Index/
+    MultiIndex to Categoricals.
+
     Requires either:
         - structure similar to the result of 'from_product', or
         - order is provided explicitly via categories argument
@@ -77,7 +79,7 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
                    ('B', 'C'),
                    ('A', 'C')])
     here lock_order works for level 1 but not for level 0;
-    use `lock_order(level=0, categories=['B','A'])`.
+    use `lock_order(level=0, categories=['B', 'A'])`.
     """
 
     if isinstance(obj, pd.DataFrame) and level is not None and axis is None:
@@ -85,42 +87,56 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
             'When "level" is specified, "axis" becomes a required argument'
         )
     
-    if not isinstance(obj, (pd.DataFrame, pd.Series, pd.Index)):
-        raise ValueError(
-            "`obj` is expected to be a DataFrame, Series, Index or MultiIndex"
-        )
-
     if inplace is False:
         obj = obj.copy()
 
     if isinstance(obj, pd.Series):
-        mis = {"index": obj.index}
+        mis = {"index": (obj.index, categories)}
     elif isinstance(obj, pd.Index):
-        if inplace is not False:
-            inplace = True
-            obj = obj.copy()
-        mis = {"index": obj}
+        if inplace is True:
+            raise ValueError(
+                    "Cannot modify Index or MultiIndex inplace, "
+                    "use lock_order(df, axis=, ...)`"
+            )
+        mis = {"index": (obj, categories)}
     elif isinstance(obj, pd.DataFrame):
         if axis is not None:
             ax, mi = obj._get_axis_name(axis), obj._get_axis(axis)
-            mis = {ax: mi}
+            mis = {ax: (mi, categories)}
         else:
-            mis = {"index": obj.index, "columns": obj.columns}
+            if categories is None:
+                categories = [None, None]
+            elif isinstance(categories, (list, tuple)):
+                if len(categories) != 2:
+                    raise ValueError(
+                        "`axis=None` requires categories=None or a list/"
+                        "tuple of two lists/tuples of appropriate sizes"
+                    )
+            mis = {
+                "index": (obj.index, categories[0]), 
+                "columns": (obj.columns, categories[1]),
+            }
     else:
-        raise TypeError(f"The first argument must a DataFrame, a Series or a MultiIndex, not {type(mi)}.")
+        raise TypeError(
+                "The first argument must a DataFrame, a Series "
+                f"or a MultiIndex, not {type(obj)}."
+        )
 
-    for ax, mi in mis.items():
+    for ax, (mi, cat) in mis.items():
         if mi.nlevels == 1:
-            new_mi = pd.CategoricalIndex(mi, mi, ordered=True)
+            if cat is None:
+                cat = mi
+            new_mi = pd.CategoricalIndex(mi, cat, ordered=True)
         elif level is None:
-            if categories is not None and len(categories) != mi.nlevels:
+            if cat is not None and len(cat) != mi.nlevels:
                 raise ValueError(
-                    f'For level=None "categories" must be of the same len as MultiIndex ({mi.nlevels})'
+                    'For level=None "categories" must be of the same len '
+                    f'as MultiIndex ({mi.nlevels}), not {len(cat)}'
                 )
             indices = []
             for i in range(mi.nlevels):
-                if categories is not None:
-                    _categories = categories[i]
+                if cat is not None:
+                    _categories = cat[i]
                 else:
                     _categories = _get_categories(mi, i, ax)
                 cur_index = mi.get_level_values(i)
@@ -130,14 +146,14 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
             new_mi = pd.MultiIndex.from_arrays(indices)
         else:
             level_num = mi._get_level_number(level)
-            if categories is None:
-                categories = _get_categories(mi, level_num, ax)
+            if cat is None:
+                cat = _get_categories(mi, level_num, ax)
             indices = [mi.get_level_values(i) for i in range(mi.nlevels)]
             indices[level_num] = pd.CategoricalIndex(
-                indices[level_num], categories, ordered=True
+                indices[level_num], cat, ordered=True
             )
             new_mi = pd.MultiIndex.from_arrays(indices)
-        #    return df.reindex(index=new_mi, copy=False)     # it's better to do it in-place
+        #    return df.reindex(index=new_mi, copy=False)  # it's better to do it in-place
         if isinstance(obj, pd.Index):
 #            if inplace is True:
 #                obj._reset_identity()
@@ -156,8 +172,8 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
 
 def vis_lock(obj, checkmark="✓"):
     """
-    Displays a checkmark next to each Index/MultiIndex level name of a DataFrame, a Series
-    or an Index/MultiIndex object in case the level is Categorical
+    Displays a checkmark next to each Index/MultiIndex level name of a DataFrame, 
+    a Series or an Index/MultiIndex object in case the level is Categorical
     """
 
     def _mark_i(mi):
