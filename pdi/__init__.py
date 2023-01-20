@@ -23,8 +23,9 @@ from pandas._libs import lib
 
 from .drop import drop
 from .visuals import patch_series, unpatch_series, sidebyside
-from .categoricals import lock_order, from_product, vis_lock
-from .levels import get_level, set_level, move_level, insert_level, drop_level, swap_levels
+from .categoricals import lock_order, lock, from_product, vis_lock, vis
+from .levels import get_level, set_level, move_level, insert_level, \
+                    drop_level, swap_levels
 
 __all__ = [
     "find",
@@ -40,6 +41,7 @@ __all__ = [
     "from_dict",
     "swap_levels",
     "lock_order",
+    "lock",
     "from_product",
     "vis_lock",
     "get_level",
@@ -85,17 +87,59 @@ def findall(s, x, pos=False):
         return s.index[idx]
 
 
+def _ensure_list(a, n):
+    if is_scalar(a) or isinstance(a, tuple):
+        a = [a]*n
+    elif isinstance(a, list):
+        if len(a) == 1:
+            a *= n
+        elif len(a) != n:
+            msg = f"If `label` is a list, it is expected to be of length 1"
+            if n != 1:
+                msg += f" or {n}"
+            msg += f", not {len(a)}"
+            f'`label` is expected to be a scalar or a list of length 1 or {n}, '
+            raise ValueError(msg)
+    else:
+        raise TypeError(
+            '`label` is expected to be scalar, tuple, or list thereof, '
+            f'got {type(a)}.'
+        )
+    return a
+
+def _gen_labels(dst, axis, n, ignore_index):
+    index = dst._get_axis(axis)
+    if index.is_numeric():
+        start = index.max()+1
+        labels = np.arange(start, start+n)
+    elif ignore_index is True:
+        labels = dst.index[:1].tolist() * n
+    else:
+        raise ValueError(
+            "The `label` argument is required for non-numeric index."
+        )
+    return labels
+
+def _build_labels(dst, axis, label, n, ignore_index):
+    if label is lib.no_default:
+        labels = _gen_labels(dst, axis, n, ignore_index=ignore_index)
+    else:
+        labels = _ensure_list(label, n)
+    return labels
+
 def insert(
     dst: NDFrame,
     pos: int,
     value: Scalar | AnyArrayLike | Sequence,
-    label: Hashable = 0,
+    label: Hashable = lib.no_default,
     ignore_index: bool = False,
-    allow_duplicates: bool = None,
+    allow_duplicates: bool = False,
+    axis=0,
+    inplace=False,
 ) -> NDFrame:
     """
-    Inserts DataFrame, Series, list, tuple or dict into DataFrame as a row.
-    Also inserts Series, list or a tuple into a Series.
+    Inserts list, tuple, np.array, DataFrame or Series into a DataFrame.
+    Also inserts scalar, list, tuple or Series into a Series.
 
     dst :
         Series or DataFrame to insert into.
@@ -104,7 +148,11 @@ def insert(
     value :
         Row(s) to insert.
     label : scalar or tuple
-        Index label (use tuple for a MultiIndex label).
+        Index label (use tuple for a MultiIndex label). 
+        If not specified: 
+          - if the index is numeric, index.max()+1
+          - when inserting Series with a name into a DataFrame, keeps its name 
+            as a label.
     ignore_index : bool, default False
         If True, do not use the existing index. The resulting rows will be
         labeled 0, ..., n - 1. This is useful if you are inserting into a
@@ -113,48 +161,128 @@ def insert(
         Check for duplicates before inserting
     """
 
-    n = len(dst)
-    if not 0 <= pos <= n:
-        raise ValueError("Must verify 0 <= pos <= len(dst)")
-
-    if isinstance(dst, pd.DataFrame):
-        if isinstance(value, (list, tuple)):
-            dst1 = pd.DataFrame([value], columns=dst.columns, index=[label])
-        elif isinstance(value, dict):
-            dst1 = pd.DataFrame(value, index=[label])
-        elif isinstance(value, pd.DataFrame):
-            dst1 = value
-        elif isinstance(value, pd.Series):
-            dst1 = value.to_frame().T
-        else:
-            raise TypeError(f"Received value of type {type(value)}")
-
-    elif isinstance(dst, pd.Series):
-        if isinstance(value, pd.Series):
-            dst1 = value
-        else:
-            dst1 = pd.Series(value, index=[label])
-
-    else:
-        raise TypeError(
-            f"Supported dst types are: DataFrame, Series. Got type {type(dst)}"
+    if isinstance(dst, pd.Series) and axis not in (0, 'index', 'rows'):
+        raise ValueError(
+            f"Series has no axis {axis}."
         )
 
+    if not isinstance(dst, (pd.Series, pd.DataFrame)):
+        raise TypeError(
+            f"First argument must be a DataFrame or a Series. Got {type(dst)}"
+        )
+
+    if axis == 1:
+        if inplace is False:
+            dst = dst.copy()
+        dst.insert(pos, label, value, allow_duplicates=allow_duplicates)
+        if inplace is False:
+            return dst
+        
+    n = len(dst)
+    if not 0 <= pos <= n:
+        raise IndexError("Must verify 0 <= pos <= len(dst)")
+
+    if ignore_index is True and label is not lib.no_default:
+        raise ValueError(
+            "`label` and `ignore_index=True` are mutually exclusive"
+        )
+
+    if isinstance(dst, pd.DataFrame):
+        if is_scalar(value):
+            dst1 = pd.DataFrame(
+                [[value]*dst.shape[1]], 
+                columns=dst.columns, 
+                index=_build_labels(dst, axis, label, 1, ignore_index)
+            )
+
+        elif isinstance(value, (list, tuple)):
+            if len(value) == 0:
+                return dst
+            elif not isinstance(value[0], (list, tuple)):     # 1D case
+                value = [value]
+            dst1 = pd.DataFrame(
+                value, 
+                columns=dst.columns, 
+                index=_build_labels(dst, axis, label, len(value), ignore_index)
+            )
+
+        elif isinstance(value, np.ndarray):
+            if value.ndim == 1:
+                value = [value]
+            elif value.ndim != 2:
+                raise ValueError(
+                    f"The `value` has wrong number of dimensions: {value.ndim}. "
+                    "Expected 1 or 2."
+                )
+            dst1 = pd.DataFrame(
+                value, 
+                columns=dst.columns,
+                index=_build_labels(dst, axis, label, len(value), ignore_index)
+            )
+
+        elif isinstance(value, pd.DataFrame):
+            dst1 = value
+            if label is not lib.no_default:
+                dst1.index = _ensure_list(label, len(value))
+
+        elif isinstance(value, pd.Series):
+            dst1 = value.to_frame().T
+            if label is not lib.no_default:
+                dst1.index = _ensure_list(label, 1)
+            elif value.name is None: 
+                dst1.index = _gen_labels(dst, axis, 1, ignore_index)
+        else:
+            raise TypeError(
+                "Supported value types: list, tuple, ndarray, DataFrame, Series. "
+                f"Got {type(value)}"
+            )
+
+    else:  # = isinstance(dst, pd.Series):
+        if is_scalar(value):
+            dst1 = pd.Series(
+                [value], 
+                index=_build_labels(dst, axis, label, 1, ignore_index)
+            )
+        elif isinstance(value, (list, tuple, np.ndarray)):
+            dst1 = pd.Series(
+                value, 
+                index=_build_labels(dst, axis, label, len(value), ignore_index)
+            )
+        elif isinstance(value, pd.Series):
+            dst1 = value
+            if label is not lib.no_default:
+                dst1.index = _ensure_list(label, len(value))
+        else:
+            raise TypeError(
+                "Supported value types: scalar, list, tuple, np.array, Series. "
+                "Got {type(value)}"
+            )
+
     if (
-        allow_duplicates is False or dst.flags.allows_duplicate_labels is False
+        allow_duplicates is False and ignore_index is not True 
+        # or dst.flags.allows_duplicate_labels is False
     ) and len(dst.index.intersection(dst1.index)):
-        msg = f"Cannot insert label {label!r}, already exists and "
-        if allow_duplicates is False:
+        if label is not lib.no_default:
+            msg = f"Cannot insert label {label!r}, already exists and "
+#            if allow_duplicates is False:
             msg += "allow_duplicates is False, "
-        if dst.flags.allows_duplicate_labels is False:
-            msg += "dst.flags.allows_duplicate_labels is False, "
-        msg += "consider ignore_index=True"
+#            if dst.flags.allows_duplicate_labels is False:
+#                msg += "dst.flags.allows_duplicate_labels is False, "
+            msg += "consider ignore_index=True"
+        else:
+            msg = "Duplicates detected in the index. Consider `ignore_index=True`"
+            if label is lib.no_default:
+                msg += " or provide index label(s) manually in the `label` argument."
         raise ValueError(msg)
 
     if pos == n:  # just for speed, not really necessary
-        return pd.concat([dst, dst1], ignore_index=ignore_index)
+        res = pd.concat([dst, dst1], ignore_index=ignore_index)
     else:
-        return pd.concat([dst[:pos], dst1, dst[pos:]], ignore_index=ignore_index)
+        res = pd.concat([dst[:pos], dst1, dst[pos:]], ignore_index=ignore_index)
+
+    if isinstance(dst, pd.Series):
+        res.name = dst.name
+    return res
 
 
 def _move(a, pos, val):
@@ -277,6 +405,38 @@ class Mi:
 
 @property
 def get_mi(self):
+    """
+    Helps indexing MultiIndex in the rows (read and write access).
+    Same policy for keeping and removing the filtered levels as in `.loc`.
+    e.g. df.mi[:, 'a', :] returns all rows that have 'a' in the second level:
+    
+    >>> df
+           A  B
+    k l m      
+    a d g  1  2
+    b e h  3  4
+    c d i  5  6
+    
+    >>> df.mi[:, 'a', :]
+           A  B
+    k l m      
+    a d g  1  2
+    c d i  5  6
+
+    >>> df.mi[:, 'a', :] = 0
+    >>> df
+           A  B
+    k l m      
+    a d g  0  0
+    b e h  3  4
+    c d i  0  0
+
+    Careful: once the result is created, it becomes a copy, so its changes
+    are not propagated to the original dataframe.
+
+    Also you can use df.mi(k='a'). Always keeps all the levels. Not writable.
+    If you don't need some levels, you can drop them with pdi.drop_level()
+    """
     return Mi(self)
 
 
@@ -300,6 +460,39 @@ class Co:
 
 @property
 def get_co(self):
+    """
+    Helps indexing MultiIndex in the colums (read and write access).
+    Same policy for keeping and removing the filtered levels as in `.loc`.
+    e.g. df.co[:, 'a', :] returns all columns that have 'a' in the second level:
+    
+    >>> df
+    K  A               B            
+    L  C       D       C       D    
+    M  E   F   E   F   E   F   E   F
+    a  1   2   3   4   5   6   7   8
+    b  9  10  11  12  13  14  15  16
+    
+    >>> df.co[:, 'C', :]
+    K  A       B    
+    L  C       C    
+    M  E   F   E   F
+    a  1   2   5   6
+    b  9  10  13  14
+
+    >>> df.co[:, 'C', :] = 0
+    >>> df
+    K  A             B           
+    L  C      D      C      D    
+    M  E  F   E   F  E  F   E   F
+    a  0  0   3   4  0  0   7   8
+    b  0  0  11  12  0  0  15  16
+
+    Careful: once the result is created, it becomes a copy, so its changes
+    are not propagated to the original dataframe.
+
+    Also you can use df.co(K='A'). Always keeps all the levels. Not writable.
+    If you don't need some levels, you can drop them with pdi.drop_level()
+    """
     return Co(self)
 
 

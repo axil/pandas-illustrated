@@ -5,15 +5,7 @@ import pandas as pd
 
 from pdi import drop
 from pdi.drop import _drop
-from pdi.testing import gen_df
-
-
-def vi(s):
-    return s.values.tolist(), s.index.to_list()
-
-
-def vic(s):
-    return s.values.tolist(), s.index.to_list(), s.columns.to_list()
+from pdi.testing import gen_df, gen_df1, vi, vic
 
 
 def test_series():
@@ -116,6 +108,12 @@ def test_raises():
     
     with pytest.raises(TypeError):
         drop(df, columns="A", columns_re="B")
+
+def test_missing_axis():
+    df = gen_df1(3,3)
+    
+    assert vic(_drop(df, 'B')) == ([[1, 3], [4, 6], [7, 9]], ['a', 'b', 'c'], ['A', 'C'])
+    assert vic(drop(df, columns='B')) == ([[1, 3], [4, 6], [7, 9]], ['a', 'b', 'c'], ['A', 'C'])
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

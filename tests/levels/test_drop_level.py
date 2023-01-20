@@ -1,6 +1,7 @@
 ﻿from math import inf
 
 import pytest
+import numpy as np
 import pandas as pd
 
 # try:
@@ -11,7 +12,7 @@ from pandas.core.generic import NDFrame
 
 
 from pdi import set_level, get_level, drop_level, move_level, swap_levels
-from pdi.testing import gen_df
+from pdi.testing import gen_df, range2d
 
 
 def vn(idx):
@@ -79,22 +80,22 @@ def test_drop_level_mi():
     #   - by positional index
     for i in range(3):
         df = gen_df(1, 3)
-        drop_level(df.columns, i)
+        drop_level(df.columns, i, inplace=True)
         assert vn(df.columns) == _DROP_RESULTS[i]
 
     df = gen_df(1, 3)
     with pytest.raises(IndexError):
-        drop_level(df.columns, 3)
+        drop_level(df.columns, 3, inplace=True)
 
     #   - by name
     for i, name in enumerate("KLM"):
         df = gen_df(1, 3)
-        drop_level(df.columns, name)
+        drop_level(df.columns, name, inplace=True)
         assert vn(df.columns) == _DROP_RESULTS[i]
 
     df = gen_df(1, 3)
     with pytest.raises(KeyError):
-        drop_level(df.columns, "Q")
+        drop_level(df.columns, "Q", inplace=True)
 
     # * inplace = False
     #   - by positional index
@@ -128,22 +129,22 @@ def test_drop_level_df_col():
     #   - by positional index
     for i in range(3):
         df = gen_df(1, 3)
-        drop_level(df, i, axis=1)
+        drop_level(df, i, axis=1, inplace=True)
         assert vn(df.columns) == _DROP_RESULTS[i]
 
     df = gen_df(1, 3)
     with pytest.raises(IndexError):
-        drop_level(df, 3, axis=1)
+        drop_level(df, 3, axis=1, inplace=True)
 
     #   - by name
     for i, name in enumerate("KLM"):
         df = gen_df(1, 3)
-        drop_level(df, name, axis=1)
+        drop_level(df, name, axis=1, inplace=True)
         assert vn(df.columns) == _DROP_RESULTS[i]
 
     df = gen_df(1, 3)
     with pytest.raises(KeyError):
-        drop_level(df, "Q", axis=1)
+        drop_level(df, "Q", axis=1, inplace=True)
 
     # * inplace = False
     #   - by positional index
@@ -177,22 +178,22 @@ def test_drop_level_df_row():
     #   - by positional index
     for i in range(3):
         df = df0.copy()
-        drop_level(df, i, axis=0)
+        drop_level(df, i, axis=0, inplace=True)
         assert vn(df.index) == _DROP_RESULTS[i]
 
     df = df0.copy()
     with pytest.raises(IndexError):
-        drop_level(df, 3, axis=0)
+        drop_level(df, 3, axis=0, inplace=True)
 
     #   - by name
     for i, name in enumerate("KLM"):
         df = df0.copy()
-        drop_level(df, name, axis=0)
+        drop_level(df, name, axis=0, inplace=True)
         assert vn(df.index) == _DROP_RESULTS[i]
 
     df = df0.copy()
     with pytest.raises(KeyError):
-        drop_level(df, "Q", axis=0)
+        drop_level(df, "Q", axis=0, inplace=True)
 
     # * inplace = False
     #   - by positional index
@@ -226,22 +227,22 @@ def test_drop_level_s():
     #   - by positional index
     for i in range(3):
         s = s0.copy()
-        drop_level(s, i, axis=0)
+        drop_level(s, i, axis=0, inplace=True)
         assert vn(s.index) == _DROP_RESULTS[i]
 
     s = s0.copy()
     with pytest.raises(IndexError):
-        drop_level(s, 3, axis=0)
+        drop_level(s, 3, axis=0, inplace=True)
 
     #   - by name
     for i, name in enumerate("KLM"):
         s = s0.copy()
-        drop_level(s, name, axis=0)
+        drop_level(s, name, axis=0, inplace=True)
         assert vn(s.index) == _DROP_RESULTS[i]
 
     s = s0.copy()
     with pytest.raises(KeyError):
-        drop_level(s, "Q", axis=0)
+        drop_level(s, "Q", axis=0, inplace=True)
 
     # * inplace = False
     #   - by positional index
@@ -266,6 +267,14 @@ def test_drop_level_s():
     with pytest.raises(KeyError):
         drop_level(s.index, "Q", inplace=False)
 
+def test_drop_multiple():
+    df = gen_df(1, 3)
+    df1 = drop_level(df, ['K', 'M'], axis=1)
+    assert vicn(df1) == \
+([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
+ ['a', 'b'],
+ [('C',), ('C',), ('D',), ('D',), ('C',), ('C',), ('D',), ('D',)],
+ [['k'], ['L']])
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

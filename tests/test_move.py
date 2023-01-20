@@ -1,14 +1,8 @@
 ﻿import pytest
 import pandas as pd
+
 from pdi import move
-
-
-def vi(s):
-    return s.values.tolist(), s.index.to_list()
-
-
-def vic(s):
-    return s.values.tolist(), s.index.to_list(), s.columns.to_list()
+from pdi.testing import vi, vic
 
 
 def test_columns():

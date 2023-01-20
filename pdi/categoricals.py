@@ -109,8 +109,8 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
             elif isinstance(categories, (list, tuple)):
                 if len(categories) != 2:
                     raise ValueError(
-                        "`axis=None` requires categories=None or a list/"
-                        "tuple of two lists/tuples of appropriate sizes"
+                        "`axis=None` requires categories = either None or a list"
+                        " of two lists of appropriate sizes"
                     )
             mis = {
                 "index": (obj.index, categories[0]), 
@@ -170,6 +170,11 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
         return obj
 
 
+def lock(*args, **kwargs):
+    kwargs['inplace'] = True
+    return lock_order(*args, **kwargs)
+
+
 def vis_lock(obj, checkmark="✓"):
     """
     Displays a checkmark next to each Index/MultiIndex level name of a DataFrame, 
@@ -198,15 +203,16 @@ def vis_lock(obj, checkmark="✓"):
     else:
         mis = [obj1.index, obj1.columns]
     for mi in mis:
-        if mi.nlevels == 1:
-            if isinstance(mi, pd.CategoricalIndex):
-                _mark_i(mi)
-        else:
+        if isinstance(mi, pd.MultiIndex):
             for i in range(mi.nlevels):
                 if isinstance(mi.get_level_values(i), pd.CategoricalIndex):
                     _mark_mi(mi, i)
+        else:
+            if isinstance(mi, pd.CategoricalIndex):
+                _mark_i(mi)
     return obj1
 
+vis = vis_lock
 
 def from_product(
     iterables, sortorder=None, names=lib.no_default, lock_order=True

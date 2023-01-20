@@ -68,11 +68,16 @@ def drop(
     columns_re=None,
 ) -> NDFrameT:
     """
-    In addition to the standard mode (exact match) adds:
-      - substring match, and regular expressions (like in 'filter')
-      - boolean indexing.
-    E.g. drop(df, index=df.A>10) deletes all rows where values
+    In addition to the standard mode of exact matching row/columns by label
+    e.g. drop(df, columns='B') deletes column B 
+    adds:
+    
+      - boolean indexing,
+    e.g. drop(df, index=df.A>10) deletes all rows where values
     in column A are above 10.
+    
+      - substring match, and regular expressions (like in 'filter'),
+    e.g. drop(df, columns_re='price[12]') deletes columns 'price1' and 'price2'
     """
     nkw = com.count_not_none(
         index,

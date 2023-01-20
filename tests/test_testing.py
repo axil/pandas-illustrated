@@ -1,19 +1,7 @@
-﻿from math import inf
+﻿import pytest
 
-import pytest
-import pandas as pd
-from pandas.core.generic import NDFrame
+from pdi.testing import range2d, gen_df, vicn
 
-from pdi.testing import range2d, gen_df
-
-def vicn(df):
-    assert isinstance(df, NDFrame)      # Frame or Series
-    return (
-        df.fillna(inf).values.tolist(),
-        df.index.to_list(),
-        df.columns.to_list(),
-        [list(df.index.names), list(df.columns.names)],
-    )
 
 def test_range2d():
     assert range2d(2,3).tolist() == [[1, 2, 3], [4, 5, 6]]

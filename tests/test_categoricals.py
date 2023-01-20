@@ -6,25 +6,10 @@ import numpy as np
 import pandas as pd
 
 import pdi
-from pdi import lock_order, from_product, from_dict
+from pdi import lock_order, lock, vis, from_product, from_dict
 from pdi.categoricals import _get_categories
-from pdi.testing import range2d, gen_df
+from pdi.testing import range2d, gen_df, gen_df1, vi, vicn
 
-
-def vi(s):
-    return s.values.tolist(), s.index.to_list()
-
-
-def vic(s):
-    return s.values.tolist(), s.index.to_list(), s.columns.to_list()
-
-def vicn(s):
-    return (
-        s.fillna(inf).values.tolist(),
-        s.index.to_list(),
-        s.columns.to_list(),
-        [list(s.index.names), list(s.columns.names)],
-    )
 
 def is_categorical(index, level):
     return isinstance(index.get_level_values(level), pd.CategoricalIndex)
@@ -347,6 +332,9 @@ def test_categories():
 def test_from_product():
     mi = from_product([[2022, 2021], list("PYTHON")], names=["K", "L"])
     check_all_categorical(mi)
+    
+    mi = from_product([[2022, 2021], list("PYTHON")], names=["K", "L"], lock_order=False)
+    check_none_categorical(mi)
 
 
 @pytest.mark.parametrize("axis, res_names, index_cats, columns_cats", [
@@ -522,6 +510,28 @@ def test_vis_lock2(axis, level, names, cats, res_cats):
         if res_cats[i] is not None:
             df2._get_axis(_axis).levels[_level].categories.tolist() == res_cats[i]
 
+def test_vis_empty_names():
+    df = gen_df1(3, 3)
+    lock(df)
+    df1 = vis(df)
+    assert df1.index.name == '✓'
+    assert df1.columns.name == '✓'
+
+    df = gen_df(2,2); df
+    df.columns.names=[None, None]
+    df.index.names=[None, None]
+    lock(df)
+    df1 = vis(df)
+    assert df1.index.names == ['✓', '✓']
+    assert df1.columns.names == ['✓', '✓']
+
+def test_vis_series_and_index():
+    df = gen_df1(3,3)
+    lock(df)
+    s = vis(df.index)
+    assert s.name == '✓'
+    s = vis(df.A) 
+    assert s.index.name == '✓'
 
 def test_raises():
     df = gen_df(2, 2)
@@ -531,8 +541,17 @@ def test_raises():
     with pytest.raises(ValueError):
         lock_order(df.columns, level=1, inplace=True)  # index is immutable
 
+def test_wrong_types():
     with pytest.raises(TypeError):
         lock_order(np.array([1,2,3]))   # numpy array has no index
+
+    df = gen_df1(3, 3)
+    with pytest.raises(ValueError):
+        lock(df, categories=list('ABCD'))
+
+    df = gen_df(2,2); df
+    with pytest.raises(ValueError):
+        lock(df, categories=[list('abcd'), list('ABCD'), list('qwer')], axis=0)
 
 if __name__ == "__main__":
     pytest.main(["-x", "-s", __file__])# + '::test_vis_lock2'])

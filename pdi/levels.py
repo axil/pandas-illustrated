@@ -245,15 +245,15 @@ def insert_level(obj, level, labels, name=lib.no_default, axis=0, inplace=False,
     else:
         return idx
 
-def drop_level(obj, level, axis=0, inplace=True):
+def drop_level(obj, level, axis=0, inplace=False):
     """
     Drops a complete level of a MultiIndex
 
     obj :
         Series, DataFrame or MultiIndex
 
-    level : int or scalar
-        Positional index or name of the level to drop. 
+    level : int, scalar or list of ints or scalars
+        Positional index(es) or name(s) of the level to drop. 
 
     axis : int or str
         0, index, rows = index;
@@ -278,11 +278,15 @@ def drop_level(obj, level, axis=0, inplace=True):
         raise TypeError(f"The first argument must a DataFrame, a Series or "
                         "a MultiIndex, not {type(mi)}.")
 
-    level_num = mi._get_level_number(level)
+    to_drop = []
+    if is_scalar(level):
+        level = [level]
+
+    to_drop = [mi._get_level_number(lev) for lev in level]
     
     levels = []
     for i in range(mi.nlevels):
-        if i != level_num:
+        if i not in to_drop:
             levels.append(mi.get_level_values(i))
 
     idx = pd.MultiIndex.from_arrays(levels)

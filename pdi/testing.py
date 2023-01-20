@@ -1,7 +1,10 @@
 from itertools import islice
+from math import inf
 
 import pandas as pd
+from pandas.core.generic import NDFrame
 import numpy as np
+
 import pdi
 
 def range2d(n, m):
@@ -30,3 +33,24 @@ def gen_df(n, m, ascending=True):
         df.sort_index(ascending=False, inplace=True, axis=0)
         df.sort_index(ascending=False, inplace=True, axis=1)
     return df
+
+def gen_df1(n, m, ascending=True):
+    return pd.DataFrame(range2d(n, m), index=list('abcdef')[:n], columns=list('ABCDEF')[:m])
+
+def vi(s):
+    return s.values.tolist(), s.index.to_list()
+
+def vic(s):
+    return s.values.tolist(), s.index.to_list(), s.columns.to_list()
+
+def vin(s):
+    return s.values.tolist(), s.index.to_list(), s.name
+
+def vicn(df):
+    assert isinstance(df, NDFrame)      # Frame or Series
+    return (
+        df.fillna(inf).values.tolist(),
+        df.index.to_list(),
+        df.columns.to_list(),
+        [list(df.index.names), list(df.columns.names)],
+    )
