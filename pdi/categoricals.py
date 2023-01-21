@@ -40,9 +40,9 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
     Converts Index or MultiIndex level(s) of DataFrame/Series/Index/
     MultiIndex to Categoricals.
 
-    Requires either:
-        - structure similar to the result of 'from_product', or
-        - order is provided explicitly via categories argument
+    Requires that either:
+        - the structure is similar to the result of 'from_product', or
+        - the order is provided explicitly via 'categories' argument
 
     obj :
         DataFrame, Series, Index or MultiIndex
