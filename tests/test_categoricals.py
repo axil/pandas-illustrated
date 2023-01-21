@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 import pdi
-from pdi import lock_order, lock, vis, from_product, from_dict
+from pdi import lock_order, lock, vis, from_product, from_dict, vis_patch, vis_unpatch
 from pdi.categoricals import _get_categories
 from pdi.testing import range2d, gen_df, gen_df1, vi, vicn
 
@@ -538,8 +538,9 @@ def test_raises():
     with pytest.raises(ValueError):
         lock_order(df, level=1)     # axis is required
 
+    df = gen_df1(3, 3)
     with pytest.raises(ValueError):
-        lock_order(df.columns, level=1, inplace=True)  # index is immutable
+        lock_order(df.columns, level=0, inplace=True)  # Index is immutable
 
 def test_wrong_types():
     with pytest.raises(TypeError):
@@ -552,6 +553,45 @@ def test_wrong_types():
     df = gen_df(2,2); df
     with pytest.raises(ValueError):
         lock(df, categories=[list('abcd'), list('ABCD'), list('qwer')], axis=0)
+
+def test_vis_patch():
+    vis_patch()
+    with pytest.raises(Exception):
+        vis_patch()
+
+    # 1L x 1L
+    df = gen_df1(3, 3)
+    lock(df)
+    
+    html = df._repr_html_()
+    assert html.count('✓') == 2
+
+    df.index.name = 'k'
+    df.columns.name = 'l'
+    html = df._repr_html_()
+    for name in 'kl':
+        assert name+'✓' in html
+    
+    # 3L x 3L
+    df = gen_df(3, 3)
+    lock(df)
+    
+    html = df._repr_html_()
+    for name in 'klmKLM':
+        assert name+'✓' in html
+    assert df.index.names == list('klm')
+    assert df.columns.names == list('KLM')
+
+    df.index.names = [None]*3
+    df.columns.names = [None]*3
+    html = df._repr_html_()
+    for name in 'klmKLM':
+        assert name+'✓' not in html
+    assert html.count('✓') == 6
+    
+    vis_unpatch()
+    with pytest.raises(Exception):
+        vis_unpatch()
 
 if __name__ == "__main__":
     pytest.main(["-x", "-s", __file__])# + '::test_vis_lock2'])

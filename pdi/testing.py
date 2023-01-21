@@ -25,13 +25,14 @@ def gen_df(n, m, ascending=True):
 #    if n == 1:
 #        index = pd.Index(['a', 'b'], name='k')
 #    else:
-    index = pdi.from_dict(dict(islice(index_dict.items(), n)))
-    columns = pdi.from_dict(dict(islice(columns_dict.items(), m)))
+    if ascending:    
+        index = pdi.from_dict(dict(islice(index_dict.items(), n)))
+        columns = pdi.from_dict(dict(islice(columns_dict.items(), m)))
+    else:
+        index = pdi.from_dict(dict((k, v[::-1]) for k, v in islice(index_dict.items(), n)))
+        columns = pdi.from_dict(dict((k, v[::-1]) for k, v in islice(columns_dict.items(), m)))
 
     df = pd.DataFrame(range2d(2**n, 2**m), index=index, columns=columns)
-    if ascending is False:
-        df.sort_index(ascending=False, inplace=True, axis=0)
-        df.sort_index(ascending=False, inplace=True, axis=1)
     return df
 
 def gen_df1(n, m, ascending=True):

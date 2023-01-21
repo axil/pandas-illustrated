@@ -93,10 +93,9 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
     if isinstance(obj, pd.Series):
         mis = {"index": (obj.index, categories)}
     elif isinstance(obj, pd.Index):
-        if inplace is True:
+        if not isinstance(obj, pd.MultiIndex) and inplace is True:
             raise ValueError(
-                    "Cannot modify Index or MultiIndex inplace, "
-                    "use lock_order(df, axis=, ...)`"
+                "Cannot modify Index inplace, use lock_order(df, axis=, ...)`"
             )
         mis = {"index": (obj, categories)}
     elif isinstance(obj, pd.DataFrame):
@@ -155,15 +154,15 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
             new_mi = pd.MultiIndex.from_arrays(indices)
         #    return df.reindex(index=new_mi, copy=False)  # it's better to do it in-place
         if isinstance(obj, pd.Index):
-#            if inplace is True:
-#                obj._reset_identity()
-#                obj._names = new_mi._names
-#                obj._levels = new_mi._levels
-#                obj._codes = new_mi._codes
-#                obj.sortorder = new_mi.sortorder
-#                obj._reset_cache()
-#            else:
-             obj = new_mi
+            if inplace is True:
+                obj._reset_identity()
+                obj._names = new_mi._names
+                obj._levels = new_mi._levels
+                obj._codes = new_mi._codes
+                obj.sortorder = new_mi.sortorder
+                obj._reset_cache()
+            else:
+                obj = new_mi
         else:
             setattr(obj, ax, new_mi)
     if inplace is False:
@@ -213,6 +212,49 @@ def vis_lock(obj, checkmark="✓"):
     return obj1
 
 vis = vis_lock
+
+def _repr_html_wrapper(orig):
+    def _repr_html_(self):
+        def append_mark(name, checkmark='✓'):
+            if name is None:
+                name = checkmark
+            else:
+                name = str(name) + checkmark
+            return name
+        _index_names = self.index.names
+        _columns_names = self.columns.names
+        for idx in self.index, self.columns:
+            if isinstance(idx, pd.MultiIndex):
+                names = list(idx.names)
+                for i in range(idx.nlevels):
+                    if isinstance(idx.get_level_values(i), pd.CategoricalIndex):
+                        names[i] = append_mark(names[i])
+                idx.names = names
+            else:
+                if isinstance(idx, pd.CategoricalIndex):
+                    idx.name = append_mark(idx.name)
+        res = orig(self)
+        self.index.names = _index_names
+        self.columns.names = _columns_names
+        return res
+
+    return _repr_html_
+    
+def vis_patch():
+    if not hasattr(pd.DataFrame, '_repr_html_orig'):
+        pd.DataFrame._repr_html_orig = pd.DataFrame._repr_html_ 
+        pd.DataFrame._repr_html_ = _repr_html_wrapper(pd.DataFrame._repr_html_)
+#        print('patched ok')
+    else:
+        raise Exception('already patched')
+
+def vis_unpatch():
+    if hasattr(pd.DataFrame, '_repr_html_orig'):
+        pd.DataFrame._repr_html_ = pd.DataFrame._repr_html_orig
+        del pd.DataFrame._repr_html_orig
+#        print('unpatched ok')
+    else:
+        raise Exception('not patched')
 
 def from_product(
     iterables, sortorder=None, names=lib.no_default, lock_order=True

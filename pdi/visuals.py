@@ -134,3 +134,5 @@ def sidebyside(*dfs, names=[], index=True, valign="top"):
     html_str = f"<table>{html_str}</table>"
     html_str = html_str.replace("table", 'table style="display:inline"')
     display_html(html_str, raw=True)
+
+sbs = sidebyside

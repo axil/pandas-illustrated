@@ -18,12 +18,13 @@ from pandas.core.generic import NDFrame
 try:
     from pandas._typing import NDFrameT
 except:  # pandas < 1.4
-    from pandas._typing import FrameOrSeries
+    from pandas._typing import FrameOrSeries as NDFrameT
 from pandas._libs import lib
 
 from .drop import drop
-from .visuals import patch_series, unpatch_series, sidebyside
-from .categoricals import lock_order, lock, from_product, vis_lock, vis
+from .visuals import patch_series, unpatch_series, sidebyside, sbs
+from .categoricals import lock_order, lock, from_product, vis_lock, vis, \
+        vis_patch, vis_unpatch
 from .levels import get_level, set_level, move_level, insert_level, \
                     drop_level, swap_levels
 
@@ -42,8 +43,10 @@ __all__ = [
     "swap_levels",
     "lock_order",
     "lock",
-    "from_product",
     "vis_lock",
+    "vis_patch",
+    "vis_unpatch",
+    "from_product",
     "get_level",
     "set_level",
     "move_level",
@@ -87,26 +90,6 @@ def findall(s, x, pos=False):
         return s.index[idx]
 
 
-def _ensure_list(a, n):
-    if is_scalar(a) or isinstance(a, tuple):
-        a = [a]*n
-    elif isinstance(a, list):
-        if len(a) == 1:
-            a *= n
-        elif len(a) != n:
-            msg = f"If `label` is a list, it is expected to be of length 1"
-            if n != 1:
-                msg += f" or {n}"
-            msg += f", not {len(a)}"
-            f'`label` is expected to be a scalar or a list of length 1 or {n}, '
-            raise ValueError(msg)
-    else:
-        raise TypeError(
-            '`label` is expected to be scalar, tuple, or list thereof, '
-            f'got {type(a)}.'
-        )
-    return a
-
 def _gen_labels(dst, axis, n, ignore_index):
     index = dst._get_axis(axis)
     if index.is_numeric():
@@ -120,6 +103,30 @@ def _gen_labels(dst, axis, n, ignore_index):
         )
     return labels
 
+def _ensure_list(a, n):
+    if is_scalar(a):
+        a = [a]*n
+    elif isinstance(a, tuple):
+        a = list(map(list, a))
+    elif isinstance(a, list):
+        if len(a) == 1:
+            a *= n
+        elif len(a) != n:
+            msg = f"If `label` is a list, it is expected to be of length 1"
+            if n != 1:
+                msg += f" or {n}"
+            msg += f", not {len(a)}"
+            f'`label` is expected to be a scalar or a list of length 1 or {n}, '
+            raise ValueError(msg)
+        if isinstance(a[0], tuple):
+            a = list(map(list, zip(*a)))
+    else:
+        raise TypeError(
+            '`label` is expected to be scalar, tuple, or list thereof, '
+            f'got {type(a)}.'
+        )
+    return a
+
 def _build_labels(dst, axis, label, n, ignore_index):
     if label is lib.no_default:
         labels = _gen_labels(dst, axis, n, ignore_index=ignore_index)
@@ -128,7 +135,7 @@ def _build_labels(dst, axis, label, n, ignore_index):
     return labels
 
 def insert(
-    dst: NDFrame,
+    dst: NDFrameT,
     pos: int,
     value: Scalar | AnyArrayLike | Sequence,
     label: Hashable = lib.no_default,
@@ -136,7 +143,7 @@ def insert(
     allow_duplicates: bool = False,
     axis=0,
     inplace=False,
-) -> NDFrame:
+) -> NDFrameT:
     """
     Inserts list, tuple, np.array, DataFrame or Series into a DataFrame.
     Also inserts scalar, list, tuple or Series into a Series.
@@ -200,10 +207,11 @@ def insert(
                 return dst
             elif not isinstance(value[0], (list, tuple)):     # 1D case
                 value = [value]
+            idx = _build_labels(dst, axis, label, len(value), ignore_index)
             dst1 = pd.DataFrame(
                 value, 
                 columns=dst.columns, 
-                index=_build_labels(dst, axis, label, len(value), ignore_index)
+                index=idx
             )
 
         elif isinstance(value, np.ndarray):
