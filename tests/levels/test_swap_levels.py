@@ -1,28 +1,9 @@
-﻿from math import inf
-
-import pytest
+﻿import pytest
 import pandas as pd
-
-from pandas.core.generic import NDFrame
+import numpy as np
 
 from pdi import set_level, get_level, drop_level, swap_levels, swap_levels
-from pdi.testing import gen_df
-
-
-def vn(idx):
-    return idx.values.tolist(), list(idx.names)
-
-def vin(s):
-    return s.values.tolist(), s.index.to_list(), [s.name, s.index.name]
-
-def vicn(df):
-    assert isinstance(df, NDFrame)  # Frame or Series
-    return (
-        df.fillna(inf).values.tolist(),
-        df.index.to_list(),
-        df.columns.to_list(),
-        [list(df.index.names), list(df.columns.names)],
-    )
+from pdi.testing import gen_df, vn, vin, vicn
 
 
 RESULTS = \
@@ -201,6 +182,15 @@ def test_swap_levels_df_col():
     df = df0.copy()
     with pytest.raises(KeyError):
         swap_levels(df, "K", "Q", axis=1, inplace=False)
+    
+    # * axis=None
+    for i in range(3):
+        for j in range(3):
+            if i != j:
+                df = df0.copy()
+                swap_levels(df, i, j, inplace=True)
+                assert vn(df.columns) == RESULTS[i, j], (i, j)
+
 
 
 def test_swap_levels_df_row():
@@ -435,6 +425,15 @@ def test_swap_levels_s_sort():
     s = s0.copy()
     with pytest.raises(KeyError):
         swap_levels(s, "K", "Q", axis=0, inplace=False, sort=True)
+
+def test_wrong_types():
+    with pytest.raises(TypeError):
+        swap_levels(np.array([1,2,3]))
+
+def test_sort_multiindex():
+    df = gen_df(2,2)
+    with pytest.raises(ValueError):
+        swap_levels(df.columns, 0, 1, sort=True)
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

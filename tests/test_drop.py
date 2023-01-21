@@ -104,6 +104,9 @@ def test_multiindex2_columns():
 def test_raises():
     df = gen_df(1, 2)
     with pytest.raises(TypeError):
+        _drop(df)
+    
+    with pytest.raises(TypeError):
         _drop(df, items="A", like="B", axis=1)
     
     with pytest.raises(TypeError):

@@ -40,6 +40,9 @@ def gen_df1(n, m, ascending=True):
 def vi(s):
     return s.values.tolist(), s.index.to_list()
 
+def vn(idx):
+    return idx.values.tolist(), list(idx.names)
+
 def vic(s):
     return s.values.tolist(), s.index.to_list(), s.columns.to_list()
 

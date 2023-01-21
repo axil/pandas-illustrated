@@ -4,29 +4,8 @@ import pytest
 import numpy as np
 import pandas as pd
 
-# try:
-#    from pandas._typing import NDFrameT
-# except:  # pandas < 1.4
-#    from pandas._typing import FrameOrSeries as NDFrameT
-from pandas.core.generic import NDFrame
-
-
 from pdi import set_level, get_level, drop_level, move_level, swap_levels
-from pdi.testing import gen_df, range2d
-
-
-def vn(idx):
-    return idx.values.tolist(), list(idx.names)
-
-
-def vicn(df):
-    assert isinstance(df, NDFrame)  # Frame or Series
-    return (
-        df.fillna(inf).values.tolist(),
-        df.index.to_list(),
-        df.columns.to_list(),
-        [list(df.index.names), list(df.columns.names)],
-    )
+from pdi.testing import gen_df, gen_df1, range2d, vn, vicn
 
 
 _DROP_RESULTS = (
@@ -168,6 +147,12 @@ def test_drop_level_df_col():
     df = gen_df(1, 3)
     with pytest.raises(KeyError):
         drop_level(df.columns, "Q", inplace=False)
+    
+    # * axis = None
+    for i in range(3):
+        df = gen_df(1, 3)
+        drop_level(df, i, inplace=True)
+        assert vn(df.columns) == _DROP_RESULTS[i]
 
 
 def test_drop_level_df_row():
@@ -275,6 +260,16 @@ def test_drop_multiple():
  ['a', 'b'],
  [('C',), ('C',), ('D',), ('D',), ('C',), ('C',), ('D',), ('D',)],
  [['k'], ['L']])
+
+def test_drop_simple_index():
+    df = gen_df1(3,3); df
+    with pytest.raises(TypeError):
+        drop_level(df, axis=1, level=0)
+
+def test_wrong_types():
+    with pytest.raises(TypeError):
+        drop_level(np.array([1,2,3]), axis=0, level=0)
+
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

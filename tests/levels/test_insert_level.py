@@ -1,29 +1,9 @@
-﻿from math import inf
-
-import pytest
+﻿import pytest
 import numpy as np
 import pandas as pd
 
-from pandas.core.generic import NDFrame
-
 from pdi import insert_level
-from pdi.testing import gen_df
-
-
-def vn(idx):
-    return idx.values.tolist(), list(idx.names)
-
-def vin(s):
-    return s.values.tolist(), s.index.to_list(), [s.name, s.index.name]
-
-def vicn(df):
-    assert isinstance(df, NDFrame)  # Frame or Series
-    return (
-        df.fillna(inf).values.tolist(),
-        df.index.to_list(),
-        df.columns.to_list(),
-        [list(df.index.names), list(df.columns.names)],
-    )
+from pdi.testing import gen_df, gen_df1, vn, vic, vin, vicn
 
 
 RESULTS_SCALAR = \
@@ -487,6 +467,34 @@ def test_array_s_noname(a, results):
     with pytest.raises(KeyError):
         insert_level(s, "Z", a, axis=0, inplace=True)
 
+def test_insert_into_simple_index():
+    df = gen_df1(3,3); df
+    df1 = insert_level(df, 1, ['D','E','F'], 'L')
+    assert vic(df1) == \
+    ([[1, 2, 3], [4, 5, 6], [7, 8, 9]],
+    ['a', 'b', 'c'],
+    [('A', 'D'), ('B', 'E'), ('C', 'F')])
+
+    with pytest.raises(ValueError):
+        insert_level(df.columns, 1, ['D','E','F'], 'L', inplace=True)
+
+def test_incorrect_types():
+    with pytest.raises(TypeError):
+        insert_level(np.array([1,2,3]), 0, 'L')
+    
+    df = gen_df1(3, 3)
+    with pytest.raises(TypeError):
+        insert_level(df, 1, {'a': 10})
+
+def test_incorrect_sizes():
+    df = gen_df1(3, 3)
+    with pytest.raises(ValueError):
+        insert_level(df, 1, ['D','E'], 'L')
+
+def test_mi_inplace_sort():
+    df = gen_df(1,2)
+    with pytest.raises(ValueError):
+        insert_level(df.columns, 0, list('EFGH'), inplace=True, sort=True)
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

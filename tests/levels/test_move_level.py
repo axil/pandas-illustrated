@@ -2,6 +2,7 @@
 
 import pytest
 import pandas as pd
+import numpy as np
 
 from pandas.core.generic import NDFrame
 
@@ -229,6 +230,14 @@ def test_move_level_df_col():
     df = df0.copy()
     with pytest.raises(KeyError):
         move_level(df, "K", "Q", axis=1, inplace=False)
+
+    # * axis = None
+    for i in range(3):
+        for j in range(4):
+            if i != j:
+                df = df0.copy()
+                move_level(df, i, j, inplace=True)
+                assert vn(df.columns) == _MOVE_RESULTS[i, j], (i, j)
 
 
 def test_move_level_df_row():
@@ -490,6 +499,15 @@ def test_move_level_s_sort():
     s = s0.copy()
     with pytest.raises(KeyError):
         move_level(s, "K", "Q", axis=0, inplace=False, sort=True)
+
+def test_wrong_types():
+    with pytest.raises(TypeError):
+        move_level(np.array([1,2,3]), 0, 1)
+
+def test_sort_multiindex():
+    df = gen_df(2,2)
+    with pytest.raises(ValueError):
+        move_level(df.columns, 0, 2, sort=True)
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

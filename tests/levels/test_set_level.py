@@ -7,23 +7,7 @@ from pandas.core.generic import NDFrame
 from pandas._libs import lib
 
 from pdi import set_level
-from pdi.testing import gen_df
-
-
-def vn(idx):
-    return idx.values.tolist(), list(idx.names)
-
-def vin(s):
-    return s.values.tolist(), s.index.to_list(), [s.name, s.index.name]
-
-def vicn(df):
-    assert isinstance(df, NDFrame)  # Frame or Series
-    return (
-        df.fillna(inf).values.tolist(),
-        df.index.to_list(),
-        df.columns.to_list(),
-        [list(df.index.names), list(df.columns.names)],
-    )
+from pdi.testing import gen_df, vn, vin, vicn
 
 
 def test_set_level_11():
@@ -120,6 +104,12 @@ def test_mi_12_QRST(a, name, result):
         assert vn(idx) == result[i], i
         assert vicn(df) == orig, i
     
+    # df, axis=None
+    for i in range(2):
+        df = df0.copy()
+        set_level(df, i, a, name=name, inplace=True)
+        assert vn(df.columns) == result[i], i
+
     # df, axis=1
     for i in range(2):
         df = df0.copy()
@@ -195,6 +185,10 @@ def test_mi_12_QRST(a, name, result):
         assert vn(s1.index) == result[i], i
         assert vin(s) == orig, i
 
+def test_size_mismatch():
+    df = gen_df(2,2)
+    with pytest.raises(ValueError):
+        set_level(df, 'K', ['X','Y', 'Z'], axis=1)
 
 if __name__ == "__main__":
     pytest.main(["-x", "-s", __file__])  # + '::test7'])
