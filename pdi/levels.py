@@ -260,7 +260,9 @@ def insert_level(obj, level, labels, name=lib.no_default, axis=None, inplace=Fal
 
 def drop_level(obj, level, axis=None, inplace=False):
     """
-    Drops a complete level of a MultiIndex
+    Drops a complete level of a MultiIndex.
+    If only one level remains (and `inplace` is not True),
+    a simple Index is returned.
 
     obj :
         Series, DataFrame or MultiIndex
@@ -305,7 +307,10 @@ def drop_level(obj, level, axis=None, inplace=False):
         if i not in to_drop:
             levels.append(mi.get_level_values(i))
 
-    idx = pd.MultiIndex.from_arrays(levels)
+    if inplace is False and len(levels) == 1:
+        idx = pd.Index(levels[0])
+    else:
+        idx = pd.MultiIndex.from_arrays(levels)
 
     if inplace:
         mi._reset_identity()
