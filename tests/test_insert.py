@@ -4,8 +4,8 @@ from numpy import inf
 import pandas as pd
 from pandas._libs import lib
 
-from pdi import insert
-from pdi.testing import range2d, gen_df1, vi, vic, vin
+from pdi import insert, append
+from pdi.testing import range2d, gen_df1, vi, vic, vin, vicn
 
 
 @pytest.mark.parametrize("row", [
@@ -211,7 +211,7 @@ def test3():
     df = pd.DataFrame([[4, 5, 6], [7, 8, 9]], columns=["A", "B", "C"])
     with pytest.raises(IndexError) as exinfo:
         insert(df, -1, [1, 2, 3])
-    assert str(exinfo.value) == "Must verify 0 <= pos <= len(dst)"
+    assert str(exinfo.value) == "Must verify 0 <= pos <= 2"
 
 
 def test4():
@@ -594,6 +594,15 @@ def test_insert_scalar():
         ([[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 8, 9]],
         ['a', 'b', 'z', 'c'],
         ['A', 'B', 'C'])
+
+def test_append():
+    df = gen_df1(2,3)
+    df1 = append(df, pd.DataFrame([[7,8],[9,10]], columns=['D','E'], index=['a', 'b']), axis=1)
+    assert vicn(df1) == \
+    ([[1, 2, 3, 7, 8], [4, 5, 6, 9, 10]],
+ ['a', 'b'],
+ ['A', 'B', 'C', 'D', 'E'],
+ [[None], [None]])
 
 if __name__ == "__main__":
     pytest.main(["-x", "-s", __file__])  # + '::test7'])

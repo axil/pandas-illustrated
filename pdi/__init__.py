@@ -138,6 +138,7 @@ def _build_labels(dst, axis, label, n, ignore_index):
         labels = _ensure_list(label, n)
     return labels
 
+
 def insert(
     dst: NDFrameT,
     pos: int,
@@ -145,6 +146,7 @@ def insert(
     label: Hashable = lib.no_default,
     axis=0,
     ignore_index: bool = False,
+    order = None,
     allow_duplicates: bool = False,
     inplace=False,
 ) -> NDFrameT:
@@ -182,26 +184,22 @@ def insert(
             f"First argument must be a DataFrame or a Series. Got {type(dst)}"
         )
 
-    if axis == 1:
-        if inplace is False:
-            dst = dst.copy()
-        dst.insert(pos, label, value, allow_duplicates=allow_duplicates)
-        if inplace is False:
-            return dst
-        
-    n = len(dst)
-    if not 0 <= pos <= n:
-        raise IndexError("Must verify 0 <= pos <= len(dst)")
-
+    if axis == 1 and ignore_index is True:
+        raise ValueError("ignore_index=True is not compatible with axis=1")
+    
     if ignore_index is True and label is not lib.no_default:
         raise ValueError(
             "`label` and `ignore_index=True` are mutually exclusive"
         )
+        
+    n = dst.shape[axis]
+    if not 0 <= pos <= n:
+        raise IndexError(f"Must verify 0 <= pos <= {n}")
 
     if isinstance(dst, pd.DataFrame):
         if is_scalar(value):
             dst1 = pd.DataFrame(
-                [[value]*dst.shape[1]], 
+                [[value]*dst.shape[axis]], 
                 columns=dst.columns, 
                 index=_build_labels(dst, axis, label, 1, ignore_index)
             )
@@ -209,14 +207,25 @@ def insert(
         elif isinstance(value, (list, tuple)):
             if len(value) == 0:
                 return dst
-            elif not isinstance(value[0], (list, tuple)):     # 1D case
-                value = [value]
-            idx = _build_labels(dst, axis, label, len(value), ignore_index)
-            dst1 = pd.DataFrame(
-                value, 
-                columns=dst.columns, 
-                index=idx
-            )
+            elif isinstance(value[0], (list, tuple)):     # 2D case
+                k = len(value)
+            elif is_scalar(value[0]):     # 1D case
+                if axis == 0:
+                    value = [value]
+                else:
+                    value = [[v] for v in value]
+                k = 1
+            else:
+                raise TypeError(
+                    'If value is a list its elements should either be lists or scalars, '
+                    f'not {type(value[0])}'
+                )
+            idx = _build_labels(dst, axis, label, k, ignore_index)
+            if axis == 0:
+                dst1 = pd.DataFrame(value, index=idx, columns=dst.columns)
+            else:
+                dst1 = pd.DataFrame(value, index=dst.index, columns=idx)
+            
 
         elif isinstance(value, np.ndarray):
             if value.ndim == 1:
@@ -226,23 +235,34 @@ def insert(
                     f"The `value` has wrong number of dimensions: {value.ndim}. "
                     "Expected 1 or 2."
                 )
-            dst1 = pd.DataFrame(
-                value, 
-                columns=dst.columns,
-                index=_build_labels(dst, axis, label, len(value), ignore_index)
-            )
+            idx = _build_labels(dst, axis, label, len(value), ignore_index)
+            if axis == 0:
+                dst1 = pd.DataFrame(value, index=idx, columns=dst.columns)
+            else:
+                dst1 = pd.DataFrame(value, index=dst.index, columns=idx)
 
         elif isinstance(value, pd.DataFrame):
             dst1 = value
             if label is not lib.no_default:
-                dst1.index = _ensure_list(label, len(value))
+                idx = _ensure_list(label, len(value))
+                if axis == 0:
+                    dst1.index = idx
+                else:
+                    dst1.columns = idx
 
         elif isinstance(value, pd.Series):
             dst1 = value.to_frame().T
             if label is not lib.no_default:
-                dst1.index = _ensure_list(label, 1)
+                idx = _ensure_list(label, 1)
             elif value.name is None: 
-                dst1.index = _gen_labels(dst, axis, 1, ignore_index)
+                idx = _gen_labels(dst, axis, 1, ignore_index)
+            else:
+                idx = None
+            if idx is not None:
+                if axis == 0:
+                    dst1.index = idx
+                else:
+                    dst1.columns = idx
         else:
             raise TypeError(
                 "Supported value types: list, tuple, ndarray, DataFrame, Series. "
@@ -273,27 +293,60 @@ def insert(
     if (
         allow_duplicates is False and \
         ignore_index is not True and \
-        len(dst.index.intersection(dst1.index))
+        len(dst._get_axis(axis).intersection(dst1._get_axis(axis)))
     ):
         if label is not lib.no_default:
-            msg = f"Cannot insert label {label!r}, already exists and "
-            msg += "allow_duplicates is False, "
-            msg += "consider ignore_index=True"
+            msg = f"Cannot insert label {label!r}, already exists and allow_duplicates is False"
+            if axis == 0:
+                msg += ", consider ignore_index=True."
+            else:
+                msg += '.'
         else:
-            msg = "Duplicates detected in the index. Consider `ignore_index=True`"
-            if label is lib.no_default:
-                msg += " or provide index label(s) manually in the `label` argument."
+            if axis == 0:
+                msg = "Duplicates detected in the index. Consider `ignore_index=True`"
+                if label is lib.no_default:
+                    msg += " or provide index label(s) manually in the `label` argument."
+                else:
+                    msg += '.'
+            else:
+                msg = "Duplicates detected in the index."
+                if label is lib.no_default:
+                    msg += " Consider providing column label(s) manually in the `label` argument."
         raise ValueError(msg)
 
     if pos == n:  # just for speed, not really necessary
-        res = pd.concat([dst, dst1], ignore_index=ignore_index)
+        res = pd.concat([dst, dst1], axis=axis, ignore_index=ignore_index)
+    elif axis == 0:
+        res = pd.concat([dst[:pos], dst1, dst[pos:]], axis=axis, ignore_index=ignore_index)
     else:
-        res = pd.concat([dst[:pos], dst1, dst[pos:]], ignore_index=ignore_index)
+        res = pd.concat([dst.iloc[:, :pos], dst1, dst.iloc[:, pos:]], axis=axis, ignore_index=ignore_index)
 
     if isinstance(dst, pd.Series):
         res.name = dst.name
     return res
 
+
+def append(
+    dst: NDFrameT,
+    value: Scalar | AnyArrayLike | Sequence,
+    label: Hashable = lib.no_default,
+    axis=0,
+    ignore_index: bool = False,
+    order = None,
+    allow_duplicates: bool = False,
+    inplace=False,
+) -> NDFrameT:
+    return insert(
+        dst,
+        dst.shape[axis], 
+        value, 
+        label=label, 
+        axis=axis, 
+        ignore_index=ignore_index,
+        order=order,
+        allow_duplicates=allow_duplicates,
+        inplace=inplace
+    )
 
 def _move(a, pos, val):
     a = a.copy()
