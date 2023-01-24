@@ -7,23 +7,7 @@ import numpy as np
 from pandas.core.generic import NDFrame
 
 from pdi import set_level, get_level, drop_level, move_level, swap_levels
-from pdi.testing import gen_df
-
-
-def vn(idx):
-    return idx.values.tolist(), list(idx.names)
-
-def vin(s):
-    return s.values.tolist(), s.index.to_list(), [s.name, s.index.name]
-
-def vicn(df):
-    assert isinstance(df, NDFrame)  # Frame or Series
-    return (
-        df.fillna(inf).values.tolist(),
-        df.index.to_list(),
-        df.columns.to_list(),
-        [list(df.index.names), list(df.columns.names)],
-    )
+from pdi.testing import gen_df, vn, vin, vicn
 
 
 _MOVE_RESULTS = {

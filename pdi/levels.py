@@ -17,14 +17,14 @@ from pandas.core.indexes.multi import _require_listlike
 from pandas.core.generic import NDFrame
 from pandas._libs import lib
 
-def get_level(obj, level, axis=None):
+def get_level(obj, level_id, axis=None):
     """
     Returns a complete level of a MultiIndex (alias to .get_level_values).
     
     obj :
         Series, DataFrame or MultiIndex
 
-    level : int or scalar
+    level_id : int or scalar
         Positional index or name of the level to return
     
     axis : int, str or None
@@ -36,31 +36,31 @@ def get_level(obj, level, axis=None):
     if isinstance(obj, (pd.Series, pd.DataFrame)):
         if axis is None:
             axis = obj._info_axis_name
-        return get_level(obj._get_axis(axis), level)
+        return get_level(obj._get_axis(axis), level_id)
     elif isinstance(obj, pd.MultiIndex):
         mi = obj
     elif isinstance(obj, pd.Index):
-        if isinstance(level, int):
-            if level != 0:
-                raise IndexError(f"Index only has level=0, not {level}")
-        elif level != obj.name:
-            raise KeyError(f"Index has name={obj.name}, not {level}")
+        if isinstance(level_id, int):
+            if level_id != 0:
+                raise IndexError(f"Index only has level_id=0, not {level_id}")
+        elif level_id != obj.name:
+            raise KeyError(f"Index has name={obj.name}, not {level_id}")
         return obj
     else:
         raise TypeError(
                 f"The first argument must a DataFrame, a Series or "
                 "a MultiIndex, not {type(mi)}."
         )
-    return mi.get_level_values(level=level)
+    return mi.get_level_values(level_id)
 
-def set_level(obj, level, labels, name=lib.no_default, axis=None, inplace=False):
+def set_level(obj, level_id, labels, name=lib.no_default, axis=None, inplace=False):
     """
     Replaces a complete level of a MultiIndex.
 
     obj :
         Series, DataFrame or MultiIndex
 
-    level : int or scalar
+    level_id : int or scalar
         Positional index or name of the level
 
     labels :
@@ -73,8 +73,8 @@ def set_level(obj, level, labels, name=lib.no_default, axis=None, inplace=False)
 
     name :
         New name of the level. If not specified:
-          - keeps original name if `level` is a list or array or 
-          - keeps name of the `level` if `level` is an Index or a Series.
+          - keeps original level name if `labels` is a list or an array or 
+          - keeps name of the `labels` if `labels` is an Index or a Series.
 
     axis : int, str or None
         0, 'index', 'rows' = index;
@@ -93,7 +93,7 @@ def set_level(obj, level, labels, name=lib.no_default, axis=None, inplace=False)
             raise TypeError(f"MultiIndex expected in the {ax}, got {type(mi)}.")
         if inplace is False:
             obj = obj.copy()
-        index = set_level(mi, level, labels, name=name, inplace=False)
+        index = set_level(mi, level_id, labels, name=name, inplace=False)
         setattr(obj, ax, index)
         if inplace:
             return
@@ -107,7 +107,7 @@ def set_level(obj, level, labels, name=lib.no_default, axis=None, inplace=False)
                 "a MultiIndex, not {type(mi)}."
         )
     
-    level_num = mi._get_level_number(level)
+    level_num = mi._get_level_number(level_id)
     
     if isinstance(labels, pd.Index):
         index = labels
@@ -149,16 +149,16 @@ def set_level(obj, level, labels, name=lib.no_default, axis=None, inplace=False)
     else:
         return idx
 
-def insert_level(obj, level, labels, name=lib.no_default, axis=None, inplace=False, sort=False):
+def insert_level(obj, pos, labels, name=lib.no_default, axis=None, inplace=False, sort=False):
     """
     Inserts a complete level of a MultiIndex
 
     obj :
         Series, DataFrame or MultiIndex
 
-    level :
+    pos :
         Positional index or name of the level to prepend to. 
-        Use level=index.nlevels to append
+        Use pos=index.nlevels to append
 
     labels :
         One of: 
@@ -191,7 +191,7 @@ def insert_level(obj, level, labels, name=lib.no_default, axis=None, inplace=Fal
 #            raise TypeError(f"MultiIndex expected in the {ax}, got {type(mi)}.")
         if inplace is False:
             obj = obj.copy()
-        index = insert_level(mi, level, labels, name=name, inplace=False, sort=False)
+        index = insert_level(mi, pos, labels, name=name, inplace=False, sort=False)
         setattr(obj, ax, index)
         if sort:
             obj.sort_index(axis=axis, inplace=True)
@@ -216,10 +216,10 @@ def insert_level(obj, level, labels, name=lib.no_default, axis=None, inplace=Fal
             "Cannot sort MultiIndex, use pdi.move_level(df, axis=..., sort=True) instead"
         )
 
-    if isinstance(level, int) and level >= mi.nlevels:
-        level_num = level  # append mode
+    if isinstance(pos, int) and pos >= mi.nlevels:
+        level_num = pos  # append mode
     else:
-        level_num = mi._get_level_number(level)
+        level_num = mi._get_level_number(pos)
     
     n = len(mi)
     if is_scalar(labels):
@@ -258,7 +258,7 @@ def insert_level(obj, level, labels, name=lib.no_default, axis=None, inplace=Fal
     else:
         return idx
 
-def drop_level(obj, level, axis=None, inplace=False):
+def drop_level(obj, level_id, axis=None, inplace=False):
     """
     Drops a complete level of a MultiIndex.
     If only one level remains (and `inplace` is not True),
@@ -267,7 +267,7 @@ def drop_level(obj, level, axis=None, inplace=False):
     obj :
         Series, DataFrame or MultiIndex
 
-    level : int, scalar or list of ints or scalars
+    level_id : int, scalar or list of ints or scalars
         Positional index(es) or name(s) of the level to drop. 
 
     axis : int, str or None
@@ -286,7 +286,7 @@ def drop_level(obj, level, axis=None, inplace=False):
             raise TypeError(f"MultiIndex expected in the {ax}, got {type(mi)}.")
         if inplace is False:
             obj = obj.copy()
-        index = drop_level(mi, level, inplace=False)
+        index = drop_level(mi, level_id, inplace=False)
         setattr(obj, ax, index)
         if not inplace:
             return obj
@@ -297,10 +297,10 @@ def drop_level(obj, level, axis=None, inplace=False):
                         f"a MultiIndex, not {type(obj)}.")
 
     to_drop = []
-    if is_scalar(level):
-        level = [level]
+    if is_scalar(level_id):
+        level_id = [level_id]
 
-    to_drop = [mi._get_level_number(lev) for lev in level]
+    to_drop = [mi._get_level_number(lev) for lev in level_id]
     
     levels = []
     for i in range(mi.nlevels):
@@ -461,4 +461,67 @@ def swap_levels(obj, i: Axis = -2, j: Axis = -1, axis: Axis = None, inplace=Fals
     else:
         return idx
 
+def join_levels(obj, name=None, sep='_', axis=None, inplace=False):
+    if isinstance(obj, (pd.Series, pd.DataFrame)):
+        if axis is None:
+            axis = obj._info_axis_name
+        ax, mi = obj._get_axis_name(axis), obj._get_axis(axis)
+        if not isinstance(mi, pd.MultiIndex):
+            raise TypeError(f"MultiIndex expected in the {ax}, got {type(mi)}.")
+        if inplace is False:
+            obj = obj.copy()
+        index = join_levels(mi, name=name, inplace=False)
+        setattr(obj, ax, index)
+        return None if inplace else obj
+    elif isinstance(obj, pd.MultiIndex):
+        ax, mi = "index", obj
+    else:
+        raise TypeError(
+            f"First argument must a DataFrame, a Series or a MultiIndex, not {type(obj)}."
+        )
+    
+    idx = pd.Index(
+        [sep.join(x) for x in list(zip(*[get_level(mi, i) for i in range(mi.nlevels)]))],
+        name=name,
+    )
 
+    if inplace:
+        raise ValueError(
+            "Cannot join levels of MultiIndex inplace, consider "
+            "`join_levels(df, inplace=True)`"
+        )
+    else:
+        return idx
+
+def split_level(obj, names=None, sep='_', axis=None, inplace=False):
+    if isinstance(obj, (pd.Series, pd.DataFrame)):
+        if axis is None:
+            axis = obj._info_axis_name
+        ax, mi = obj._get_axis_name(axis), obj._get_axis(axis)
+        if isinstance(mi, pd.MultiIndex) and mi.nlevels > 1:
+            raise TypeError("MultiIndex is expected to have only one level")
+        if inplace is False:
+            obj = obj.copy()
+        index = split_level(mi, names=names, inplace=False)
+        setattr(obj, ax, index)
+        return None if inplace else obj
+    elif isinstance(obj, pd.MultiIndex):
+        ax, mi = "index", obj.get_level_values(0)
+    elif isinstance(obj, pd.Index):
+        ax, mi = "index", obj
+    else:
+        raise TypeError(
+            f"First argument must a DataFrame, a Series or a MultiIndex, not {type(obj)}."
+        )
+    
+    idx = pd.MultiIndex.from_tuples(
+            [x.split(sep) for x in mi],
+            names=names)
+
+    if inplace:
+        raise ValueError(
+            "Cannot split levels of an Index inplace, consider "
+            "`split_levels(df, inplace=True)`"
+        )
+    else:
+        return idx

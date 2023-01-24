@@ -36,7 +36,12 @@ def gen_df(n, m, ascending=True):
     return df
 
 def gen_df1(n, m, ascending=True):
-    return pd.DataFrame(range2d(n, m), index=list('abcdef')[:n], columns=list('ABCDEF')[:m])
+    index = 'abcdef'[:n]
+    columns = 'ABCDEF'[:m]
+    if ascending is False:
+        index = index[::-1]
+        columns = columns[::-1]
+    return pd.DataFrame(range2d(n, m), index=list(index), columns=list(columns))
 
 def vi(s):
     return s.values.tolist(), s.index.to_list()

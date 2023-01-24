@@ -24,9 +24,9 @@ from pandas._libs import lib
 from .drop import drop
 from .visuals import patch_series, unpatch_series, sidebyside, sbs
 from .categoricals import lock_order, lock, from_product, vis_lock, vis, \
-        vis_patch, vis_unpatch
+                          vis_patch, vis_unpatch
 from .levels import get_level, set_level, move_level, insert_level, \
-                    drop_level, swap_levels
+                    drop_level, swap_levels, join_levels, split_level
 
 __all__ = [
     "find",
@@ -38,8 +38,10 @@ __all__ = [
     "patch_series",
     "unpatch_series",
     "sidebyside",
-    "patch_dataframe",
+    "sbs",
+    "patch_mi_co",
     "from_dict",
+    "from_kw",
     "swap_levels",
     "lock_order",
     "lock",
@@ -53,6 +55,8 @@ __all__ = [
     "insert_level",
     "drop_level",
     "swap_levels",
+    "join_levels",
+    "split_level",
 ]
 
 
@@ -139,9 +143,9 @@ def insert(
     pos: int,
     value: Scalar | AnyArrayLike | Sequence,
     label: Hashable = lib.no_default,
+    axis=0,
     ignore_index: bool = False,
     allow_duplicates: bool = False,
-    axis=0,
     inplace=False,
 ) -> NDFrameT:
     """
@@ -267,15 +271,13 @@ def insert(
             )
 
     if (
-        allow_duplicates is False and ignore_index is not True 
-        # or dst.flags.allows_duplicate_labels is False
-    ) and len(dst.index.intersection(dst1.index)):
+        allow_duplicates is False and \
+        ignore_index is not True and \
+        len(dst.index.intersection(dst1.index))
+    ):
         if label is not lib.no_default:
             msg = f"Cannot insert label {label!r}, already exists and "
-#            if allow_duplicates is False:
             msg += "allow_duplicates is False, "
-#            if dst.flags.allows_duplicate_labels is False:
-#                msg += "dst.flags.allows_duplicate_labels is False, "
             msg += "consider ignore_index=True"
         else:
             msg = "Duplicates detected in the index. Consider `ignore_index=True`"
@@ -504,9 +506,10 @@ def get_co(self):
     return Co(self)
 
 
-def patch_dataframe():
+def patch_mi_co():
     pd.DataFrame.mi = get_mi
     pd.DataFrame.co = get_co
+    pd.Series.mi = get_mi
 
 
 def from_dict(d):
@@ -525,4 +528,6 @@ def from_dict(d):
     else:
         return pd.MultiIndex.from_tuples(zip(*d.values()), names=d.keys())
 
+def from_kw(**args):
+    return from_dict(args)
 

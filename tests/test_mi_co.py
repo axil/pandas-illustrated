@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 
-from pdi import patch_dataframe
+from pdi import patch_mi_co
 from pdi.testing import gen_df, vic
 import pdi
 
@@ -10,7 +10,7 @@ def range2d(n, m):
     return np.arange(1, n * m + 1).reshape(n, m)
 
 def test_patch_series():
-    patch_dataframe()
+    patch_mi_co()
 
     df = pd.DataFrame(
         range2d(8, 8),

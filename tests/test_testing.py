@@ -1,6 +1,6 @@
 ﻿import pytest
 
-from pdi.testing import range2d, gen_df, vicn
+from pdi.testing import range2d, gen_df, gen_df1, vicn
 
 
 def test_range2d():
@@ -33,6 +33,12 @@ def test_gen_df_23():
   ('B', 'D', 'E'),
   ('B', 'D', 'F')],
  [['k', 'l'], ['K', 'L', 'M']])
+
+def test_gen_df1():
+    assert vicn(gen_df1(2,3)) == \
+        ([[1, 2, 3], [4, 5, 6]], ['a', 'b'], ['A', 'B', 'C'], [[None], [None]])
+    assert vicn(gen_df1(2,3, False)) == \
+        ([[1, 2, 3], [4, 5, 6]], ['b', 'a'], ['C', 'B', 'A'], [[None], [None]])
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

@@ -15,8 +15,8 @@ def _get_categories(mi, level, ax):
             categories = uniques
         else:
             raise ValueError(
-                f"Non-monotonic labels in level={level}. "
-                "Use lock_order(..., categories=[list of categories])."
+                f"Non-monotonic labels in {ax} level={level}. "
+                "Use lock_order(..., categories=[list of categories]) for this level."
             )
     else:
         fr = mi.to_frame(index=False)
