@@ -16,7 +16,7 @@ def _get_categories(mi, level, ax):
         else:
             raise ValueError(
                 f"Non-monotonic labels in {ax} level={level}. "
-                "Use lock_order(..., categories=[list of categories]) for this level."
+                "Use locked(..., categories=[list of categories]) for this level."
             )
     else:
         fr = mi.to_frame(index=False)
@@ -29,13 +29,13 @@ def _get_categories(mi, level, ax):
                 if not np.all(seq.values == v.iloc[:, level].values):
                     raise ValueError(
                         f"Non-regular MultiIndex structure at level {level} of the {ax}. "
-                        "Use lock_order(..., categories=[list of categories])."
+                        "Use locked(..., categories=[list of categories])."
                     )
         categories = seq.unique()
     return categories
 
 
-def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
+def locked(obj, level=None, axis=None, categories=None, inplace=False):
     """
     Converts Index or MultiIndex level(s) of DataFrame/Series/Index/
     MultiIndex to Categoricals.
@@ -66,20 +66,20 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
                    ('B', 'C'),
                    ('A', 'D'),
                    ('A', 'C')])
-    here lock_order works for both level 0 and level 1.
+    here locked works for both level 0 and level 1.
 
     2) MultiIndex([('B', 'D'),
                    ('B', 'C'),
                    ('A', 'D')])
-    here lock_order works for level 0 but not for level 1;
-    use `lock_order(level=1, categories=['D','C'])`.
+    here locked works for level 0 but not for level 1;
+    use `locked(level=1, categories=['D','C'])`.
 
     3) MultiIndex([('B', 'D'),
                    ('A', 'D'),
                    ('B', 'C'),
                    ('A', 'C')])
-    here lock_order works for level 1 but not for level 0;
-    use `lock_order(level=0, categories=['B', 'A'])`.
+    here locked works for level 1 but not for level 0;
+    use `locked(level=0, categories=['B', 'A'])`.
     """
 
     if isinstance(obj, pd.DataFrame) and level is not None and axis is None:
@@ -95,7 +95,7 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
     elif isinstance(obj, pd.Index):
         if not isinstance(obj, pd.MultiIndex) and inplace is True:
             raise ValueError(
-                "Cannot modify Index inplace, use lock_order(df, axis=, ...)`"
+                "Cannot modify Index inplace, use locked(df, axis=, ...)`"
             )
         mis = {"index": (obj, categories)}
     elif isinstance(obj, pd.DataFrame):
@@ -171,7 +171,7 @@ def lock_order(obj, level=None, axis=None, categories=None, inplace=False):
 
 def lock(*args, **kwargs):
     kwargs['inplace'] = True
-    return lock_order(*args, **kwargs)
+    return locked(*args, **kwargs)
 
 
 def vis_lock(obj, checkmark="✓"):
@@ -261,6 +261,6 @@ def from_product(
 ) -> pd.MultiIndex:
     mi = pd.MultiIndex.from_product(iterables, sortorder=sortorder, names=names)
     if lock_order is True:
-        return globals()["lock_order"](mi)
+        return locked(mi)
     else:
         return mi
