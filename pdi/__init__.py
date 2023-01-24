@@ -139,6 +139,58 @@ def _build_labels(dst, axis, label, n, ignore_index):
         labels = _ensure_list(label, n)
     return labels
 
+#def _match_cats(dst, dst_index, axis, pos, labels, order) -> (NDFrame, pd.Index):
+def _match_cats(dst, dst1, axis, pos, order) -> (NDFrame, pd.Index):
+    dst_index = dst._get_axis(axis)
+    labels = dst1._get_axis(axis).tolist()
+    o = dst_index.ordered
+    if not o:
+        order = 'last'
+    orig_cats = dst_index.categories.tolist()
+    if order == 'strict':
+        if dst_index.tolist() == orig_cats:
+            order = pos
+        else:
+            raise ValueError(
+                f"Order of the {dst._get_axis_name(axis)} labels does not "
+                "match the locked order. Can't guess new label(s) position "
+                "in the 'categories'."
+            )
+    if order == 'guess':
+        if dst_index.tolist() == orig_cats:
+            order = pos
+        elif pos == 0:
+            order = 'first'
+        else:
+            order = 'last'
+    if order == 'last':
+        cats = pd.unique(orig_cats + labels)
+    elif order == 'first':
+        cats = pd.unique(labels + orig_cats)
+    elif isinstance(order, int):
+        cats = pd.unique(orig_cats[:order] + labels + orig_cats[order:])
+    else:
+        raise ValueError(
+            f"Unrecognized order: {order}. Must be one of: 'last', 'first',"
+            "'guess', 'strict' or an int."
+        )
+    cats = cats.tolist()
+    idx = CatIndex(labels, categories=cats, ordered=o)
+    if cats != orig_cats:
+        dst = dst.copy()
+        if axis == 0:
+            dst.index = CatIndex(dst.index, categories=cats, ordered=o)
+        else:
+            dst.columns = CatIndex(dst.columns, categories=cats, ordered=o)
+    if axis == 0:
+        dst1.index = idx
+    else:
+        dst1.columns = idx
+    return dst, dst1
+
+def is_categorical(obj, axis):
+    return isinstance(obj._get_axis(axis), pd.CategoricalIndex)
+
 
 def insert(
     dst: NDFrameT,
@@ -199,11 +251,18 @@ def insert(
 
     if isinstance(dst, pd.DataFrame):
         if is_scalar(value):
-            dst1 = pd.DataFrame(
-                [[value]*dst.shape[axis]], 
-                columns=dst.columns, 
-                index=_build_labels(dst, axis, label, 1, ignore_index)
-            )
+            if axis == 0:
+                dst1 = pd.DataFrame(
+                    [[value]*dst.shape[1-axis]], 
+                    index=_build_labels(dst, axis, label, 1, ignore_index),
+                    columns=dst.columns, 
+                )
+            else:
+                dst1 = pd.DataFrame(
+                    [[value]]*dst.shape[1-axis], 
+                    index=dst.index,
+                    columns=_build_labels(dst, axis, label, 1, ignore_index),
+                )
 
         elif isinstance(value, (list, tuple)):
             if len(value) == 0:
@@ -221,50 +280,7 @@ def insert(
                     'If value is a list its elements should either be lists or scalars, '
                     f'not {type(value[0])}'
                 )
-            labels = _build_labels(dst, axis, label, k, ignore_index)
-            dst_index = dst._get_axis(axis)
-            if isinstance(dst_index, CatIndex) and order is not None:
-                o = dst_index.ordered
-                if not o:
-                    order = 'last'
-                orig_cats = dst_index.categories.tolist()
-                if order == 'strict':
-                    if dst_index.tolist() == orig_cats:
-                        order = pos
-                    else:
-                        raise ValueError(
-                            f"Order of the {dst._get_axis_name(axis)} labels does not "
-                            "match the locked order. Can't guess new label(s) position "
-                            "in the 'categories'."
-                        )
-                if order == 'guess':
-                    if dst_index.tolist() == orig_cats:
-                        order = pos
-                    elif pos == 0:
-                        order = 'first'
-                    else:
-                        order = 'last'
-                if order == 'last':
-                    cats = pd.unique(orig_cats + labels)
-                elif order == 'first':
-                    cats = pd.unique(labels + orig_cats)
-                elif isinstance(order, int):
-                    cats = pd.unique(orig_cats[:order] + labels + orig_cats[order:])
-                else:
-                    raise ValueError(
-                        f"Unrecognized order: {order}. Must be one of: 'last', 'first',"
-                        "'guess', 'strict' or an int."
-                    )
-                cats = cats.tolist()
-                idx = CatIndex(labels, categories=cats, ordered=o)
-                if cats != orig_cats:
-                    dst = dst.copy()
-                    if axis == 0:
-                        dst.index = CatIndex(dst.index, categories=cats, ordered=o)
-                    else:
-                        dst.columns = CatIndex(dst.columns, categories=cats, ordered=o)
-            else:
-                idx = labels
+            idx = _build_labels(dst, axis, label, k, ignore_index)
             if axis == 0:
                 dst1 = pd.DataFrame(value, index=idx, columns=dst.columns)
             else:
@@ -272,13 +288,13 @@ def insert(
             
         elif isinstance(value, np.ndarray):
             if value.ndim == 1:
-                value = [value]
+                value = value.reshape(1, -1) if axis==0 else value.reshape(-1, 1)
             elif value.ndim != 2:
                 raise ValueError(
                     f"The `value` has wrong number of dimensions: {value.ndim}. "
                     "Expected 1 or 2."
                 )
-            idx = _build_labels(dst, axis, label, len(value), ignore_index)
+            idx = _build_labels(dst, axis, label, value.shape[axis], ignore_index)
             if axis == 0:
                 dst1 = pd.DataFrame(value, index=idx, columns=dst.columns)
             else:
@@ -294,7 +310,9 @@ def insert(
                     dst1.columns = idx
 
         elif isinstance(value, pd.Series):
-            dst1 = value.to_frame().T
+            dst1 = value.to_frame()
+            if axis == 0:
+                dst1 = dst1.T
             if label is not lib.no_default:
                 idx = _ensure_list(label, 1)
             elif value.name is None: 
@@ -333,13 +351,17 @@ def insert(
                 "Got {type(value)}"
             )
 
+    if is_categorical(dst, axis) and order is not None:
+        dst, dst1 = _match_cats(dst, dst1, axis, pos, order)
+
     if (
         allow_duplicates is False and \
         ignore_index is not True and \
         len(dst._get_axis(axis).intersection(dst1._get_axis(axis)))
     ):
         if label is not lib.no_default:
-            msg = f"Cannot insert label {label!r}, already exists and allow_duplicates is False"
+            msg = f"Cannot insert label {label!r}, already exists and " \
+                  "allow_duplicates is False"
             if axis == 0:
                 msg += ", consider ignore_index=True."
             else:
@@ -354,7 +376,8 @@ def insert(
             else:
                 msg = "Duplicates detected in the index."
                 if label is lib.no_default:
-                    msg += " Consider providing column label(s) manually in the `label` argument."
+                    msg += " Consider providing column label(s) manually in the " \
+                           "`label` argument."
         raise ValueError(msg)
 
     if pos == n:  # just for speed, not really necessary
@@ -366,7 +389,7 @@ def insert(
 
     if isinstance(dst, pd.Series):
         res.name = dst.name
-    return res, dst, dst1
+    return res
 
 
 def append(
