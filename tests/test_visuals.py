@@ -1,22 +1,22 @@
 ﻿import pytest
 import pandas as pd
-from pdi import patch_series, unpatch_series, sidebyside
+from pdi import patch_series_repr, unpatch_series_repr, sidebyside
 from pdi.testing import gen_df
 
 MARKER = "border-right: 1px solid"
 
-def test_patch_series():
+def test_patch_series_repr():
     assert not hasattr(pd.Series([1,2,3]), 'to_html')
     assert not hasattr(pd.Series([1,2,3]), '_repr_html_')
     
-    patch_series()
+    patch_series_repr()
     
     assert MARKER in pd.Series([1,2,3]).to_html()
     assert MARKER in pd.Series([1,2,3])._repr_html_()
     assert MARKER in pd.Series([1,2,3], name='A').to_html()
     assert MARKER in pd.Series([1,2,3], name='A')._repr_html_()
 
-    unpatch_series()
+    unpatch_series_repr()
     
     assert not hasattr(pd.Series([1,2,3]), 'to_html')
     assert not hasattr(pd.Series([1,2,3]), '_repr_html_')

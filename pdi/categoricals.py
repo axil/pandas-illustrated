@@ -257,10 +257,10 @@ def vis_unpatch():
         raise Exception('not patched')
 
 def from_product(
-    iterables, sortorder=None, names=lib.no_default, lock_order=True
+    iterables, sortorder=None, names=lib.no_default, lock=True
 ) -> pd.MultiIndex:
     mi = pd.MultiIndex.from_product(iterables, sortorder=sortorder, names=names)
-    if lock_order is True:
+    if lock is True:
         return locked(mi)
     else:
         return mi

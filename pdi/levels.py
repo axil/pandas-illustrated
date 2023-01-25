@@ -525,3 +525,48 @@ def split_level(obj, names=None, sep='_', axis=None, inplace=False):
         )
     else:
         return idx
+
+def rename_level(obj, mapping, axis=None, inplace=False):
+    if isinstance(obj, (pd.Series, pd.DataFrame)):
+        if axis is None:
+            axis = obj._info_axis_name
+        ax, mi = obj._get_axis_name(axis), obj._get_axis(axis)
+        if inplace is False:
+            obj = obj.copy()
+        index = rename_level(mi, mapping, inplace=False)
+        setattr(obj, ax, index)
+        return None if inplace else obj
+    elif isinstance(obj, pd.MultiIndex):
+        ax, mi = "index", obj
+    elif isinstance(obj, pd.Index):
+        ax, mi = "index", obj
+    else:
+        raise TypeError(
+            f"First argument must a DataFrame, a Series or a MultiIndex, not {type(obj)}."
+        )
+    
+    if isinstance(mi, pd.MultiIndex):
+        if isinstance(mapping, dict):
+            levels, names = list(mapping.keys()), list(mapping.values())
+            idx = mi.set_names(names, level=levels)
+        elif mi.nlevels == 1 and is_scalar(mapping):
+            idx = mi.set_names(mapping, level=0)
+        else:
+            raise TypeError("'mapping' must be a dict or a scalar")
+    elif isinstance(mapping, dict):
+        if mi.name in mapping:
+            idx = mi.set_names(mapping[mi.name])
+        else:
+            idx = mi.copy()
+    elif is_scalar(mapping):
+        idx = mi.set_names(mapping)
+    else:
+        raise TypeError("'mapping' must be a dict or a scalar")
+
+    if inplace:
+        raise ValueError(
+            "Cannot rename levels of an Index inplace, consider "
+            "`rename_level(df, inplace=True)`"
+        )
+    else:
+        return idx

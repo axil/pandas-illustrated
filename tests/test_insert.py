@@ -4,7 +4,7 @@ from numpy import inf
 import pandas as pd
 from pandas._libs import lib
 
-from pdi import insert, append
+from pdi import insert, append, locked
 from pdi.testing import range2d, gen_df1, vi, vic, vin, vicn
 
 
@@ -604,7 +604,46 @@ def test_append():
  ['A', 'B', 'C', 'D', 'E'],
  [[None], [None]])
 
+CAT_RESULTS = [
+    ([[1, 2, 1, 3], [4, 5, 2, 6]], [0, 1], ['C', 'B', 'D', 'A']),
+    ([[1, 2, 3, 1], [4, 5, 6, 2]], [0, 1], ['C', 'B', 'A', 'D']),
+    ([[1, 1, 2, 3], [2, 4, 5, 6]], [0, 1], ['D', 'C', 'B', 'A']),
+    ([[1, 2, 1, 3], [4, 5, 2, 6]], [0, 1], ['C', 'B', 'D', 'A']),
+    ([[1, 2, 1, 3], [4, 5, 2, 6]], [0, 1], ['C', 'B', 'D', 'A']),
+]
+
+@pytest.mark.parametrize("col", [
+    [1, 2],
+    np.array([1,2]),
+    pd.Series([1, 2]),
+    pd.DataFrame([[1], [2]]),
+])
+def test_categoricals(col):
+    df0 = locked(pd.DataFrame(range2d(2,3), columns=list('CBA')))
+
+    for i, order in enumerate(['last', 'first', 'guess', 'strict']):
+        df = df0.copy()
+        df1 = insert(df, 2, col, 'D', axis=1, order=order)
+        assert vic(df1) == CAT_RESULTS[0], i
+        df2 = df1.sort_index(axis=1)
+        assert vic(df2) == CAT_RESULTS[i+1], i
+
+    df0.sort_index(axis=1, ascending=False, inplace=True)
+
+    df = df0.copy()
+    df1 = insert(df, 2, col, 'D', axis=1, order='guess')
+    assert vic(df1) == \
+        ([[3, 2, 1, 1], [6, 5, 2, 4]], [0, 1], ['A', 'B', 'D', 'C'])
+    df2 = df1.sort_index(axis=1)
+    assert vic(df2) == \
+        ([[1, 2, 3, 1], [4, 5, 6, 2]], [0, 1], ['C', 'B', 'A', 'D'])
+    
+    with pytest.raises(ValueError):
+        df = df0.copy()
+        df1 = insert(df, 2, col, 'D', axis=1, order='strict')
+
+    
 if __name__ == "__main__":
-    pytest.main(["-x", "-s", __file__])  # + '::test7'])
-    #pytest.main(["-x", "-s", __file__ + '::test_df_numeric_named_series'])
+    #pytest.main(["-x", "-s", __file__])  # + '::test7'])
+    pytest.main(["-x", "-s", __file__ + '::test_categoricals'])
     input()

@@ -17,7 +17,7 @@ def _fix_html(html):
     return str(soup.body.decode_contents())
 
 
-def patch_series(footer=True):
+def patch_series_repr(footer=True):
     """
     Improves visual representation of the Series in Jupyter notebooks
     """
@@ -72,7 +72,7 @@ def patch_series(footer=True):
     pd.Series.to_html = to_html
 
 
-def unpatch_series():
+def unpatch_series_repr():
     """
     Reverts changes applied by patch_series()
     """

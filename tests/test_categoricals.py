@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 import pdi
-from pdi import lock_order, lock, vis, from_product, from_dict, vis_patch, vis_unpatch
+from pdi import locked, lock, vis, from_product, from_dict, vis_patch, vis_unpatch
 from pdi.categoricals import _get_categories
 from pdi.testing import range2d, gen_df, gen_df1, vi, vicn
 
@@ -68,7 +68,7 @@ def test_per_level_inplace(df0, axis):
 
     if index0.nlevels == 1:
         df = df0.copy()
-        lock_order(df, axis=axis, inplace=True)
+        locked(df, axis=axis, inplace=True)
         mi = getattr(df, axis)
         assert isinstance(mi, pd.CategoricalIndex)
         assert mi.categories.tolist() == CAT[axis][0]
@@ -78,7 +78,7 @@ def test_per_level_inplace(df0, axis):
     # per level by position
     for i in range(index0.nlevels):
         df = df0.copy()
-        lock_order(df, level=i, axis=axis, inplace=True)
+        locked(df, level=i, axis=axis, inplace=True)
         mi = getattr(df, axis)
         for j in range(mi.nlevels):
             if j == i:
@@ -92,7 +92,7 @@ def test_per_level_inplace(df0, axis):
     # per level by name
     for i, name in enumerate(index0.names):
         df = df0.copy()
-        lock_order(df, level=name, axis=axis, inplace=True)
+        locked(df, level=name, axis=axis, inplace=True)
         mi = getattr(df, axis)
         for j in range(mi.nlevels):
             if j == i:
@@ -111,7 +111,7 @@ def test_per_level_not_inplace(df0, axis):
 
     if index0.nlevels == 1:
         df = df0.copy()
-        df1 = lock_order(df, axis=axis, inplace=False)
+        df1 = locked(df, axis=axis, inplace=False)
         mi = getattr(df1, axis)
         assert isinstance(mi, pd.CategoricalIndex)
         assert mi.categories.tolist() == CAT[axis][0]
@@ -125,7 +125,7 @@ def test_per_level_not_inplace(df0, axis):
     # per level by position
     for i in range(index0.nlevels):
         df = df0.copy()
-        df1 = lock_order(df, level=i, axis=axis, inplace=False)
+        df1 = locked(df, level=i, axis=axis, inplace=False)
         mi = getattr(df1, axis)
         for j in range(mi.nlevels):
             if j == i:
@@ -142,7 +142,7 @@ def test_per_level_not_inplace(df0, axis):
     # per level by name
     for i, name in enumerate(index0.names):
         df = df0.copy()
-        df1 = lock_order(df, level=name, axis=axis, inplace=False)
+        df1 = locked(df, level=name, axis=axis, inplace=False)
         mi = getattr(df1, axis)
         for j in range(mi.nlevels):
             if j == i:
@@ -161,7 +161,7 @@ def test_per_axis_not_inplace(df0, axis):
     orig = vicn(df0)
 
     df = df0.copy()
-    df1 = lock_order(df, axis=axis, inplace=False)
+    df1 = locked(df, axis=axis, inplace=False)
     mi = getattr(df1, axis)
     for i in range(mi.nlevels):
         assert is_categorical(mi, i), i
@@ -177,7 +177,7 @@ def test_per_axis_inplace(df0, axis):
     orig = vicn(df0)
 
     df = df0.copy()
-    lock_order(df, axis=axis, inplace=True)
+    locked(df, axis=axis, inplace=True)
     mi = getattr(df, axis)
     for i in range(mi.nlevels):
         assert is_categorical(mi, i), i
@@ -190,7 +190,7 @@ def test_both_axes_inplace(df0):
     orig = vicn(df0)
 
     df = df0.copy()
-    lock_order(df, inplace=True)
+    locked(df, inplace=True)
     for axis in 'index', 'columns':
         mi = getattr(df, axis)
         for i in range(mi.nlevels):
@@ -203,7 +203,7 @@ def test_both_axes_not_inplace(df0):
     orig = vicn(df0)
 
     df = df0.copy()
-    df1 = lock_order(df, inplace=False)
+    df1 = locked(df, inplace=False)
     for axis in 'index', 'columns':
         mi = getattr(df1, axis)
         for i in range(mi.nlevels):
@@ -241,13 +241,13 @@ def test_dropped_column():
     df1 = df.drop(columns=("A", "D"))
 
     with pytest.raises(ValueError):
-        pdi.lock_order(df1)
+        pdi.locked(df1)
 
-    df1 = lock_order(df, level=0, axis=1, inplace=False)
+    df1 = locked(df, level=0, axis=1, inplace=False)
     assert isinstance(df1.columns.get_level_values(0), pd.CategoricalIndex)
     assert df1.columns.values.tolist() == df.columns.values.tolist()
 
-    df1 = lock_order(df, axis=0, inplace=False)
+    df1 = locked(df, axis=0, inplace=False)
     assert isinstance(df1.index, pd.CategoricalIndex)
     assert df1.index.values.tolist() == df.index.values.tolist()
 
@@ -259,20 +259,20 @@ def test_incorrect_sorting():
         columns=list("AB"),
     )
 
-    df1 = pdi.lock_order(df, axis=0, level=1, inplace=False)
+    df1 = pdi.locked(df, axis=0, level=1, inplace=False)
     assert isinstance(df1.index.get_level_values(1), pd.CategoricalIndex)
     assert df1.columns.values.tolist() == df.columns.values.tolist()
     assert df1.index.values.tolist() == df.index.values.tolist()
 
     with pytest.raises(ValueError):
-        pdi.lock_order(df, axis=0, level=0)
+        pdi.locked(df, axis=0, level=0)
 
 
 def test_series():
     s = pd.Series(
         np.arange(12), index=pdi.from_dict({"K": tuple("BA"), "L": tuple("PYTHON")})
     )
-    s1 = lock_order(s, inplace=False)
+    s1 = locked(s, inplace=False)
     assert isinstance(s1.index.get_level_values(0), pd.CategoricalIndex)
     assert isinstance(s1.index.get_level_values(1), pd.CategoricalIndex)
     assert s1.index.values.tolist() == s.index.values.tolist()
@@ -280,7 +280,7 @@ def test_series():
 
 def test_index():
     idx = pd.Index(list("PYTHON"))
-    idx1 = pdi.lock_order(idx)
+    idx1 = pdi.locked(idx)
     assert isinstance(idx1, pd.CategoricalIndex)
     assert idx1.values.tolist() == list("PYTHON")
     assert idx1.categories.tolist() == list("PYTHON")
@@ -289,7 +289,7 @@ def test_index():
 
 def test_multiindex():
     idx = pd.MultiIndex.from_product([("B", "A"), ("D", "C")])
-    idx1 = pdi.lock_order(idx)
+    idx1 = pdi.locked(idx)
     L1 = idx1.get_level_values(0)
     L2 = idx1.get_level_values(1)
 
@@ -306,7 +306,7 @@ def test_multiindex():
 
 def test_categories():
     idx = pd.MultiIndex.from_product([("B", "A"), tuple("PTHYON")])
-    idx1 = pdi.lock_order(idx, level=1, categories=list("PYTHON"))
+    idx1 = pdi.locked(idx, level=1, categories=list("PYTHON"))
     s = pd.Series(np.arange(1, 13), index=idx1)
     assert s.index.get_level_values(1).categories.tolist() == list("PYTHON")
     s1 = s.sort_index()
@@ -333,7 +333,7 @@ def test_from_product():
     mi = from_product([[2022, 2021], list("PYTHON")], names=["K", "L"])
     check_all_categorical(mi)
     
-    mi = from_product([[2022, 2021], list("PYTHON")], names=["K", "L"], lock_order=False)
+    mi = from_product([[2022, 2021], list("PYTHON")], names=["K", "L"], lock=False)
     check_none_categorical(mi)
 
 
@@ -353,7 +353,7 @@ def test_vis_lock1(axis, res_names, index_cats, columns_cats):
 
     #   - inplace=False
     df = df0.copy()
-    df1 = lock_order(df, axis=axis, inplace=False)
+    df1 = locked(df, axis=axis, inplace=False)
     df2 = pdi.vis_lock(df1)
     assert [df2.index.name, df2.columns.name] == res_names
     if index_cats is not None:
@@ -364,7 +364,7 @@ def test_vis_lock1(axis, res_names, index_cats, columns_cats):
     
     #   - inplace=True
     df = df0.copy()
-    lock_order(df, axis=axis, inplace=True)
+    locked(df, axis=axis, inplace=True)
     df2 = pdi.vis_lock(df)
     assert [df2.index.name, df2.columns.name] == res_names
     if index_cats is not None:
@@ -385,7 +385,7 @@ def test_vis_lock1(axis, res_names, index_cats, columns_cats):
     
     #   - inplace=False
     df = df0.copy()
-    df1 = lock_order(df, axis=axis, categories=categories[axis], inplace=False)
+    df1 = locked(df, axis=axis, categories=categories[axis], inplace=False)
     df2 = pdi.vis_lock(df1)
     assert [df2.index.name, df2.columns.name] == res_names
     if index_cats is not None:
@@ -396,7 +396,7 @@ def test_vis_lock1(axis, res_names, index_cats, columns_cats):
     
     #   - inplace=True
     df = df0.copy()
-    lock_order(df, axis=axis, categories=categories[axis], inplace=True)
+    locked(df, axis=axis, categories=categories[axis], inplace=True)
     df2 = pdi.vis_lock(df)
     assert [df2.index.name, df2.columns.name] == res_names
     if index_cats is not None:
@@ -436,7 +436,7 @@ def test_vis_lock2(axis, level, names, cats, res_cats):
 
     #   - inplace=False
     df = df0.copy()
-    df1 = lock_order(df, axis=axis, level=level, inplace=False)
+    df1 = locked(df, axis=axis, level=level, inplace=False)
     df2 = pdi.vis_lock(df1)
     assert df2.index.names == names[0]
     assert df2.columns.names == names[1]
@@ -448,7 +448,7 @@ def test_vis_lock2(axis, level, names, cats, res_cats):
     
     #   - inplace=True
     df = df0.copy()
-    lock_order(df, axis=axis, level=level, inplace=True)
+    locked(df, axis=axis, level=level, inplace=True)
     df2 = pdi.vis_lock(df)
     assert df2.index.names == names[0]
     assert df2.columns.names == names[1]
@@ -477,7 +477,7 @@ def test_vis_lock2(axis, level, names, cats, res_cats):
 
     #   - inplace=False
     df = df0.copy()
-    df1 = lock_order(
+    df1 = locked(
             df, 
             axis=axis,
             level=level,
@@ -495,7 +495,7 @@ def test_vis_lock2(axis, level, names, cats, res_cats):
 
     #   - inplace=True
     df = df0.copy()
-    lock_order(
+    locked(
             df, 
             axis=axis, 
             level=level, 
@@ -536,15 +536,15 @@ def test_vis_series_and_index():
 def test_raises():
     df = gen_df(2, 2)
     with pytest.raises(ValueError):
-        lock_order(df, level=1)     # axis is required
+        locked(df, level=1)     # axis is required
 
     df = gen_df1(3, 3)
     with pytest.raises(ValueError):
-        lock_order(df.columns, level=0, inplace=True)  # Index is immutable
+        locked(df.columns, level=0, inplace=True)  # Index is immutable
 
 def test_wrong_types():
     with pytest.raises(TypeError):
-        lock_order(np.array([1,2,3]))   # numpy array has no index
+        locked(np.array([1,2,3]))   # numpy array has no index
 
     df = gen_df1(3, 3)
     with pytest.raises(ValueError):

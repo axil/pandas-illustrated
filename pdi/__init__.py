@@ -23,11 +23,11 @@ from pandas._libs import lib
 from pandas import CategoricalIndex as CatIndex
 
 from .drop import drop
-from .visuals import patch_series, unpatch_series, sidebyside, sbs
+from .visuals import patch_series_repr, unpatch_series_repr, sidebyside, sbs
 from .categoricals import locked, lock, from_product, vis_lock, vis, \
                           vis_patch, vis_unpatch
-from .levels import get_level, set_level, move_level, insert_level, \
-                    drop_level, swap_levels, join_levels, split_level
+from .levels import get_level, set_level, move_level, insert_level, drop_level, \
+                    swap_levels, join_levels, split_level, rename_level
 
 __all__ = [
     "find",
@@ -36,8 +36,8 @@ __all__ = [
     "drop",
     "move",
     "join",
-    "patch_series",
-    "unpatch_series",
+    "patch_series_repr",
+    "unpatch_series_repr",
     "sidebyside",
     "sbs",
     "patch_mi_co",
@@ -58,6 +58,7 @@ __all__ = [
     "swap_levels",
     "join_levels",
     "split_level",
+    "rename_level",
 ]
 
 
@@ -303,7 +304,7 @@ def insert(
         elif isinstance(value, pd.DataFrame):
             dst1 = value
             if label is not lib.no_default:
-                idx = _ensure_list(label, len(value))
+                idx = _ensure_list(label, value.shape[axis])
                 if axis == 0:
                     dst1.index = idx
                 else:
