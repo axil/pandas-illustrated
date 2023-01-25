@@ -1,6 +1,7 @@
 ﻿# pandas-illustrated
 
-[![Pypi link](https://img.shields.io/pypi/v/pandas-illustrated.svg)](https://pypi.python.org/pypi/pandas-illustrated)
+[![pypi](https://img.shields.io/pypi/v/pandas-illustrated.svg)](https://pypi.python.org/pypi/pandas-illustrated)
+[![python](https://img.shields.io/pypi/pyversions/pandas-illustrated.svg)](https://pypi.org/project/pandas-illustrated/)
 ![pytest](https://github.com/axil/pandas-illustrated/actions/workflows/python-package.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![Coverage Badge](img/coverage.svg)
