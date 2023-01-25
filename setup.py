@@ -11,7 +11,7 @@ setuptools.setup(
     author='Lev Maximov',
     author_email='lev.maximov@gmail.com',
     url='https://github.com/axil/pandas-illustrated',
-    description='Helper functions from Pandas Illustrated article',
+    description='Helper functions from the Pandas Illustrated Guide',
     long_description=long_description,
     long_description_content_type='text/markdown',
     install_requires=[
