@@ -1,19 +1,53 @@
 ﻿# pandas-illustrated
 
+[![Pypi link](https://img.shields.io/pypi/v/pandas-illustrated.svg)](https://pypi.python.org/pypi/pandas-illustrated)
 ![pytest](https://github.com/axil/pandas-illustrated/actions/workflows/python-package.yml/badge.svg)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![Coverage Badge](img/coverage.svg)
 
-This repo contains code for `find()` and `findall()` functions that help in searching Series by value.
-Chooses optimal implementation depending on the size of the Series.
-See Pandas Illustrated article for details.
+This repo contains code for a number of helper functions mentioned in the "Pandas Illustrated" guide.
 
 ## Installation: 
 
     pip install pandas-illustrated
 
+## Contents
+
+- find
+- findall
+- insert
+- drop
+- move
+- join
+- patch_series_repr
+- unpatch_series_repr
+- sidebyside
+- sbs
+- patch_mi_co
+- from_dict
+- from_kw
+- swap_levels
+- locked
+- lock
+- vis_lock
+- vis_patch
+- vis_unpatch
+- from_product
+- get_level
+- set_level
+- move_level
+- insert_level
+- drop_level
+- swap_levels
+- join_levels
+- split_level
+- rename_level
+
+
 ## Usage
-   
+
+### find and findall
+
 By default `find(series, value)` looks for the first occurrence of the given *value* in a *series* and returns the corresponsing index label.
 
 ```python
@@ -47,10 +81,7 @@ With `pos=True` keyword argument `find()` and `findall()` return the positional 
 >>> pdi.find(s, 4, pos=True)
 0
 ```
-
-## Performance
-
-There's a number of ways to find index label for a given value. The most efficient of them are:
+There is a number of ways to find index label for a given value. The most efficient of them are:
 
 ```python
 — s.index[s.tolist().index(x)]       # faster for Series with less than 1000 elements
@@ -61,18 +92,20 @@ There's a number of ways to find index label for a given value. The most efficie
 
 `find()` chooses optimal implementation depending on the series size; `findall()` always uses the `where` implementation.
 
-## Improving Series Representation
+### Improving Series Representation
 
-Run `pdi.patch_series()` to make Series look better:
+Run `pdi.patch_series_repr()` to make Series look better:
 
 <img src="https://user-images.githubusercontent.com/170910/211085821-544b42b0-561a-47e7-8f32-6f31a05ed978.png" width="600">
 
 If you want to display several Series from one cell, call `display(s)` for each.
 
-To display several Series side by side call `pdi.sidebyside(s1, s2, ...)`
+### Displaying several Pandas objects side vy side
+
+To display several dataframes, series or indices side by side run `pdi.sidebyside(s1, s2, ...)`
 
 <img src="img/sbs.png" width="450"/>
 
 ## Testing
 
-Run `pytest` in project root.
+Run `pytest` in the project root.
