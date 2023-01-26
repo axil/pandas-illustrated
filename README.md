@@ -15,26 +15,34 @@ This repo contains code for a number of helper functions mentioned in the "Panda
 
 ## Contents
 
+Basic operations:
 - find
 - findall
 - insert
 - drop
 - move
 - join
+
+Visualization improvements:
 - patch_series_repr
 - unpatch_series_repr
 - sidebyside
 - sbs
+
+MultiIndex helpers:
 - patch_mi_co
 - from_dict
 - from_kw
-- swap_levels
+
+Locking columns order:
 - locked
 - lock
 - vis_lock
 - vis_patch
 - vis_unpatch
 - from_product
+
+Level manipulations:
 - get_level
 - set_level
 - move_level
