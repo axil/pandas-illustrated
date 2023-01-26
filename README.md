@@ -7,7 +7,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License](https://img.shields.io/pypi/l/pandas-illustrated)](https://pypi.org/project/pandas-illustrated/)
 
-This repo contains code for a number of helper functions mentioned in the "Pandas Illustrated" guide.
+This repo contains code for a number of helper functions mentioned in the [Pandas Illustrated](https://betterprogramming.pub/pandas-illustrated-the-definitive-visual-guide-to-pandas-c31fa921a43?sk=50184a8a8b46ffca16664f6529741abc) guide.
 
 ## Installation: 
 
