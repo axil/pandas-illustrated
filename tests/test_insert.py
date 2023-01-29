@@ -421,6 +421,10 @@ def test_allow_duplicates():
     rows = pd.DataFrame([[1, 2, 3]], columns=["A", "B", "C"])
     with pytest.raises(ValueError):
         insert(df, 0, rows)
+    with pytest.raises(ValueError):
+        insert(df, 0, rows, label=0)
+    with pytest.raises(ValueError):
+        insert(df.T, 0, rows.T, label=0, axis=1)
 
     s = pd.Series([20, 30], name='A')
     s1 = pd.Series([11, 12], name='B')
@@ -575,6 +579,10 @@ def test_wrong_types():
     df = pd.DataFrame([[1,2,3]])
     with pytest.raises(TypeError):
         insert(df, 0, {'a': 4})
+
+    df = gen_df1(3, 3)
+    with pytest.raises(TypeError):
+        insert(df, 0, [{'q': 10}])
 
 def test_columns():
     df = pd.DataFrame(range2d(2,3), columns=list('ABC'))

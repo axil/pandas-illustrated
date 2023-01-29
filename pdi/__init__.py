@@ -68,6 +68,15 @@ def find(s, x, pos=False):
     Returns index label (default) or positional index (pos=True).
     Raises ValueError if x is missing from s.
     """
+    if isinstance(s, pd.Series):
+        pass
+    elif isinstance(s, np.ndarray):    
+        pos=True
+    else:
+        raise TypeError(
+            f"First argument must be a Series or np.array. Got {type(s)}."
+        )
+
     if len(s) < 1000:
         try:
             idx = s.tolist().index(x)
@@ -278,7 +287,7 @@ def insert(
                 k = 1
             else:
                 raise TypeError(
-                    'If value is a list its elements should either be lists or scalars, '
+                    'If value is a list, its elements should either be lists or scalars, '
                     f'not {type(value[0])}'
                 )
             idx = _build_labels(dst, axis, label, k, ignore_index)

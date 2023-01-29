@@ -1,7 +1,9 @@
 ﻿import pytest
 import numpy as np
 import pandas as pd
+
 from pdi import find, findall
+from pdi.testing import gen_df1
 
 
 def test_small():
@@ -63,6 +65,16 @@ def test_strings():
         find(s, x, pos=True)
     assert str(exinfo.value) == f"{x!r} is not in Series"
 
+def test_ndarray():
+    a = np.array([1,2,3])
+    assert find(a, 3) == 2
+    with pytest.raises(ValueError):
+        assert find(a, 4)
+
+def test_types():
+    df = gen_df1(3, 3)
+    with pytest.raises(TypeError):
+        find(df, 1)
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])
