@@ -1,0 +1,2 @@
+﻿0.3 added np.array support in pdi.find
+0.4 rename level by position, 100% coverage

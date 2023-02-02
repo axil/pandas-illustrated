@@ -7,7 +7,7 @@ with open('README.md', 'r') as fh:
 
 setuptools.setup(
     name='pandas-illustrated',
-    version='0.3',
+    version='0.4',
     author='Lev Maximov',
     author_email='lev.maximov@gmail.com',
     url='https://github.com/axil/pandas-illustrated',
