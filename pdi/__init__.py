@@ -15,6 +15,7 @@ from pandas.core.dtypes.common import (
 )
 from pandas.core.indexes.multi import _require_listlike
 from pandas.core.generic import NDFrame
+
 try:
     from pandas._typing import NDFrameT
 except:  # pandas < 1.4
@@ -24,10 +25,26 @@ from pandas import CategoricalIndex as CatIndex
 
 from .drop import drop
 from .visuals import patch_series_repr, unpatch_series_repr, sidebyside, sbs
-from .categoricals import locked, lock, from_product, vis_lock, vis, \
-                          vis_patch, vis_unpatch
-from .levels import get_level, set_level, move_level, insert_level, drop_level, \
-                    swap_levels, join_levels, split_level, rename_level
+from .categoricals import (
+    locked,
+    lock,
+    from_product,
+    vis_lock,
+    vis,
+    vis_patch,
+    vis_unpatch,
+)
+from .levels import (
+    get_level,
+    set_level,
+    move_level,
+    insert_level,
+    drop_level,
+    swap_levels,
+    join_levels,
+    split_level,
+    rename_level,
+)
 
 __all__ = [
     "find",
@@ -70,12 +87,10 @@ def find(s, x, pos=False):
     """
     if isinstance(s, pd.Series):
         pass
-    elif isinstance(s, np.ndarray):    
-        pos=True
+    elif isinstance(s, np.ndarray):
+        pos = True
     else:
-        raise TypeError(
-            f"First argument must be a Series or np.array. Got {type(s)}."
-        )
+        raise TypeError(f"First argument must be a Series or np.array. Got {type(s)}.")
 
     if len(s) < 1000:
         try:
@@ -108,19 +123,18 @@ def findall(s, x, pos=False):
 def _gen_labels(dst, axis, n, ignore_index):
     index = dst._get_axis(axis)
     if index.is_numeric():
-        start = index.max()+1
-        labels = np.arange(start, start+n)
+        start = index.max() + 1
+        labels = np.arange(start, start + n)
     elif ignore_index is True:
         labels = dst.index[:1].tolist() * n
     else:
-        raise ValueError(
-            "The `label` argument is required for non-numeric index."
-        )
+        raise ValueError("The `label` argument is required for non-numeric index.")
     return labels
+
 
 def _ensure_list(a, n):
     if is_scalar(a):
-        a = [a]*n
+        a = [a] * n
     elif isinstance(a, tuple):
         a = list(map(list, a))
     elif isinstance(a, list):
@@ -131,16 +145,17 @@ def _ensure_list(a, n):
             if n != 1:
                 msg += f" or {n}"
             msg += f", not {len(a)}"
-            f'`label` is expected to be a scalar or a list of length 1 or {n}, '
+            f"`label` is expected to be a scalar or a list of length 1 or {n}, "
             raise ValueError(msg)
         if isinstance(a[0], tuple):
             a = list(map(list, zip(*a)))
     else:
         raise TypeError(
-            '`label` is expected to be scalar, tuple, or list thereof, '
-            f'got {type(a)}.'
+            "`label` is expected to be scalar, tuple, or list thereof, "
+            f"got {type(a)}."
         )
     return a
+
 
 def _build_labels(dst, axis, label, n, ignore_index):
     if label is lib.no_default:
@@ -149,15 +164,16 @@ def _build_labels(dst, axis, label, n, ignore_index):
         labels = _ensure_list(label, n)
     return labels
 
-#def _match_cats(dst, dst_index, axis, pos, labels, order) -> (NDFrame, pd.Index):
+
+# def _match_cats(dst, dst_index, axis, pos, labels, order) -> (NDFrame, pd.Index):
 def _match_cats(dst, dst1, axis, pos, order) -> (NDFrame, pd.Index):
     dst_index = dst._get_axis(axis)
     labels = dst1._get_axis(axis).tolist()
     o = dst_index.ordered
     if not o:
-        order = 'last'
+        order = "last"
     orig_cats = dst_index.categories.tolist()
-    if order == 'strict':
+    if order == "strict":
         if dst_index.tolist() == orig_cats:
             order = pos
         else:
@@ -166,16 +182,16 @@ def _match_cats(dst, dst1, axis, pos, order) -> (NDFrame, pd.Index):
                 "match the locked order. Can't guess new label(s) position "
                 "in the 'categories'."
             )
-    if order == 'guess':
+    if order == "guess":
         if dst_index.tolist() == orig_cats:
             order = pos
         elif pos == 0:
-            order = 'first'
+            order = "first"
         else:
-            order = 'last'
-    if order == 'last':
+            order = "last"
+    if order == "last":
         cats = pd.unique(orig_cats + labels)
-    elif order == 'first':
+    elif order == "first":
         cats = pd.unique(labels + orig_cats)
     elif isinstance(order, int):
         cats = pd.unique(orig_cats[:order] + labels + orig_cats[order:])
@@ -198,6 +214,7 @@ def _match_cats(dst, dst1, axis, pos, order) -> (NDFrame, pd.Index):
         dst1.columns = idx
     return dst, dst1
 
+
 def is_categorical(obj, axis):
     return isinstance(obj._get_axis(axis), pd.CategoricalIndex)
 
@@ -209,7 +226,7 @@ def insert(
     label: Hashable = lib.no_default,
     axis=0,
     ignore_index: bool = False,
-    order = None,
+    order=None,
     allow_duplicates: bool = False,
     inplace=False,
 ) -> NDFrameT:
@@ -224,10 +241,10 @@ def insert(
     value :
         Row(s) to insert.
     label : scalar or tuple
-        Index label (use tuple for a MultiIndex label). 
-        If not specified: 
+        Index label (use tuple for a MultiIndex label).
+        If not specified:
           - if the index is numeric, index.max()+1
-          - when inserting Series with a name into a DataFrame, keeps its name 
+          - when inserting Series with a name into a DataFrame, keeps its name
             as a label.
     ignore_index : bool, default False
         If True, do not use the existing index. The resulting rows will be
@@ -237,10 +254,8 @@ def insert(
         Check for duplicates before inserting
     """
 
-    if isinstance(dst, pd.Series) and axis not in (0, 'index', 'rows'):
-        raise ValueError(
-            f"Series has no axis {axis}."
-        )
+    if isinstance(dst, pd.Series) and axis not in (0, "index", "rows"):
+        raise ValueError(f"Series has no axis {axis}.")
 
     if not isinstance(dst, (pd.Series, pd.DataFrame)):
         raise TypeError(
@@ -249,12 +264,10 @@ def insert(
 
     if axis == 1 and ignore_index is True:
         raise ValueError("ignore_index=True is not compatible with axis=1")
-    
+
     if ignore_index is True and label is not lib.no_default:
-        raise ValueError(
-            "`label` and `ignore_index=True` are mutually exclusive"
-        )
-        
+        raise ValueError("`label` and `ignore_index=True` are mutually exclusive")
+
     n = dst.shape[axis]
     if not 0 <= pos <= n:
         raise IndexError(f"Must verify 0 <= pos <= {n}")
@@ -263,13 +276,13 @@ def insert(
         if is_scalar(value):
             if axis == 0:
                 dst1 = pd.DataFrame(
-                    [[value]*dst.shape[1-axis]], 
+                    [[value] * dst.shape[1 - axis]],
                     index=_build_labels(dst, axis, label, 1, ignore_index),
-                    columns=dst.columns, 
+                    columns=dst.columns,
                 )
             else:
                 dst1 = pd.DataFrame(
-                    [[value]]*dst.shape[1-axis], 
+                    [[value]] * dst.shape[1 - axis],
                     index=dst.index,
                     columns=_build_labels(dst, axis, label, 1, ignore_index),
                 )
@@ -277,9 +290,9 @@ def insert(
         elif isinstance(value, (list, tuple)):
             if len(value) == 0:
                 return dst
-            elif isinstance(value[0], (list, tuple)):     # 2D case
+            elif isinstance(value[0], (list, tuple)):  # 2D case
                 k = len(value)
-            elif is_scalar(value[0]):     # 1D case
+            elif is_scalar(value[0]):  # 1D case
                 if axis == 0:
                     value = [value]
                 else:
@@ -287,18 +300,18 @@ def insert(
                 k = 1
             else:
                 raise TypeError(
-                    'If value is a list, its elements should either be lists or scalars, '
-                    f'not {type(value[0])}'
+                    "If value is a list, its elements should either be lists or scalars, "
+                    f"not {type(value[0])}"
                 )
             idx = _build_labels(dst, axis, label, k, ignore_index)
             if axis == 0:
                 dst1 = pd.DataFrame(value, index=idx, columns=dst.columns)
             else:
                 dst1 = pd.DataFrame(value, index=dst.index, columns=idx)
-            
+
         elif isinstance(value, np.ndarray):
             if value.ndim == 1:
-                value = value.reshape(1, -1) if axis==0 else value.reshape(-1, 1)
+                value = value.reshape(1, -1) if axis == 0 else value.reshape(-1, 1)
             elif value.ndim != 2:
                 raise ValueError(
                     f"The `value` has wrong number of dimensions: {value.ndim}. "
@@ -325,7 +338,7 @@ def insert(
                 dst1 = dst1.T
             if label is not lib.no_default:
                 idx = _ensure_list(label, 1)
-            elif value.name is None: 
+            elif value.name is None:
                 idx = _gen_labels(dst, axis, 1, ignore_index)
             else:
                 idx = None
@@ -343,13 +356,11 @@ def insert(
     else:  # = isinstance(dst, pd.Series):
         if is_scalar(value):
             dst1 = pd.Series(
-                [value], 
-                index=_build_labels(dst, axis, label, 1, ignore_index)
+                [value], index=_build_labels(dst, axis, label, 1, ignore_index)
             )
         elif isinstance(value, (list, tuple, np.ndarray)):
             dst1 = pd.Series(
-                value, 
-                index=_build_labels(dst, axis, label, len(value), ignore_index)
+                value, index=_build_labels(dst, axis, label, len(value), ignore_index)
             )
         elif isinstance(value, pd.Series):
             dst1 = value
@@ -365,32 +376,44 @@ def insert(
         dst, dst1 = _match_cats(dst, dst1, axis, pos, order)
 
     if (
-        allow_duplicates is False and \
-        ignore_index is not True and \
-        len(dst._get_axis(axis).intersection(dst1._get_axis(axis)))
+        allow_duplicates is False
+        and ignore_index is not True
+        and len(dst._get_axis(axis).intersection(dst1._get_axis(axis)))
     ):
         if label is not lib.no_default:
-            msg = f"Cannot insert label {label!r}, already exists and " \
-                  "allow_duplicates is False"
+            msg = (
+                f"Cannot insert label {label!r}, already exists and "
+                "allow_duplicates is False"
+            )
             if axis == 0:
                 msg += ", consider ignore_index=True."
             else:
-                msg += '.'
+                msg += "."
         else:
             if axis == 0:
-                msg = "Duplicates detected in the index. Consider `ignore_index=True`" \
-                      " or provide index label(s) manually in the `label` argument."
+                msg = (
+                    "Duplicates detected in the index. Consider `ignore_index=True`"
+                    " or provide index label(s) manually in the `label` argument."
+                )
             else:
-                msg = "Duplicates detected in the columns. Consider providing column " \
-                      "label(s) manually in the `label` argument."
+                msg = (
+                    "Duplicates detected in the columns. Consider providing column "
+                    "label(s) manually in the `label` argument."
+                )
         raise ValueError(msg)
 
     if pos == n:  # just for speed, not really necessary
         res = pd.concat([dst, dst1], axis=axis, ignore_index=ignore_index)
     elif axis == 0:
-        res = pd.concat([dst[:pos], dst1, dst[pos:]], axis=axis, ignore_index=ignore_index)
+        res = pd.concat(
+            [dst[:pos], dst1, dst[pos:]], axis=axis, ignore_index=ignore_index
+        )
     else:
-        res = pd.concat([dst.iloc[:, :pos], dst1, dst.iloc[:, pos:]], axis=axis, ignore_index=ignore_index)
+        res = pd.concat(
+            [dst.iloc[:, :pos], dst1, dst.iloc[:, pos:]],
+            axis=axis,
+            ignore_index=ignore_index,
+        )
 
     if isinstance(dst, pd.Series):
         res.name = dst.name
@@ -403,21 +426,22 @@ def append(
     label: Hashable = lib.no_default,
     axis=0,
     ignore_index: bool = False,
-    order = None,
+    order=None,
     allow_duplicates: bool = False,
     inplace=False,
 ) -> NDFrameT:
     return insert(
         dst,
-        dst.shape[axis], 
-        value, 
-        label=label, 
-        axis=axis, 
+        dst.shape[axis],
+        value,
+        label=label,
+        axis=axis,
         ignore_index=ignore_index,
         order=order,
         allow_duplicates=allow_duplicates,
-        inplace=inplace
+        inplace=inplace,
     )
+
 
 def _move(a, pos, val):
     a = a.copy()
@@ -524,7 +548,7 @@ class Mi:
         self.df = df
 
     def __repr__(self):
-        return 'Row indexer'
+        return "Row indexer"
 
     def __getitem__(self, args):
         return self.df.loc[args, :]
@@ -543,24 +567,24 @@ def get_mi(self):
     Helps indexing MultiIndex in the rows (read and write access).
     Same policy for keeping and removing the filtered levels as in `.loc`.
     e.g. df.mi[:, 'a', :] returns all rows that have 'a' in the second level:
-    
+
     >>> df
            A  B
-    k l m      
+    k l m
     a d g  1  2
     b e h  3  4
     c d i  5  6
-    
+
     >>> df.mi[:, 'a', :]
            A  B
-    k l m      
+    k l m
     a d g  1  2
     c d i  5  6
 
     >>> df.mi[:, 'a', :] = 0
     >>> df
            A  B
-    k l m      
+    k l m
     a d g  0  0
     b e h  3  4
     c d i  0  0
@@ -579,7 +603,7 @@ class Co:
         self.df = df
 
     def __repr__(self):
-        return 'Column indexer'
+        return "Column indexer"
 
     def __getitem__(self, args):
         return self.df.loc[:, args]
@@ -598,25 +622,25 @@ def get_co(self):
     Helps indexing MultiIndex in the colums (read and write access).
     Same policy for keeping and removing the filtered levels as in `.loc`.
     e.g. df.co[:, 'a', :] returns all columns that have 'a' in the second level:
-    
+
     >>> df
-    K  A               B            
-    L  C       D       C       D    
+    K  A               B
+    L  C       D       C       D
     M  E   F   E   F   E   F   E   F
     a  1   2   3   4   5   6   7   8
     b  9  10  11  12  13  14  15  16
-    
+
     >>> df.co[:, 'C', :]
-    K  A       B    
-    L  C       C    
+    K  A       B
+    L  C       C
     M  E   F   E   F
     a  1   2   5   6
     b  9  10  13  14
 
     >>> df.co[:, 'C', :] = 0
     >>> df
-    K  A             B           
-    L  C      D      C      D    
+    K  A             B
+    L  C      D      C      D
     M  E  F   E   F  E  F   E   F
     a  0  0   3   4  0  0   7   8
     b  0  0  11  12  0  0  15  16
@@ -643,7 +667,7 @@ def from_dict(d):
     dict of tuples => MultiIndex from product
     """
     if not isinstance(d, dict):
-        raise TypeError('Argument of `from_dict` must be a dict.')
+        raise TypeError("Argument of `from_dict` must be a dict.")
     if len(d) == 1:
         k, v = next(iter(d.items()))
         return pd.Index(v, name=k)
@@ -652,6 +676,6 @@ def from_dict(d):
     else:
         return pd.MultiIndex.from_tuples(zip(*d.values()), names=d.keys())
 
+
 def from_kw(**args):
     return from_dict(args)
-

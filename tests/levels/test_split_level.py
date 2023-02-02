@@ -9,36 +9,50 @@ from pandas.core.generic import NDFrame
 from pdi import join_levels, split_level
 from pdi.testing import gen_df, vn, vin, vicn
 
-@pytest.mark.parametrize("names, result", [
-    (None, 
-    ([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
- ['a', 'b'],
- [('A', 'C', 'E'),
-  ('A', 'C', 'F'),
-  ('A', 'D', 'E'),
-  ('A', 'D', 'F'),
-  ('B', 'C', 'E'),
-  ('B', 'C', 'F'),
-  ('B', 'D', 'E'),
-  ('B', 'D', 'F')],
- [['k'], [None, None, None]])
-    ),
-    (['K', 'L', 'M'], 
-    ([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
- ['a', 'b'],
- [('A', 'C', 'E'),
-  ('A', 'C', 'F'),
-  ('A', 'D', 'E'),
-  ('A', 'D', 'F'),
-  ('B', 'C', 'E'),
-  ('B', 'C', 'F'),
-  ('B', 'D', 'E'),
-  ('B', 'D', 'F')],
- [['k'], ['K', 'L', 'M']])
-    ),
-])
+
+@pytest.mark.parametrize(
+    "names, result",
+    [
+        (
+            None,
+            (
+                [[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
+                ["a", "b"],
+                [
+                    ("A", "C", "E"),
+                    ("A", "C", "F"),
+                    ("A", "D", "E"),
+                    ("A", "D", "F"),
+                    ("B", "C", "E"),
+                    ("B", "C", "F"),
+                    ("B", "D", "E"),
+                    ("B", "D", "F"),
+                ],
+                [["k"], [None, None, None]],
+            ),
+        ),
+        (
+            ["K", "L", "M"],
+            (
+                [[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
+                ["a", "b"],
+                [
+                    ("A", "C", "E"),
+                    ("A", "C", "F"),
+                    ("A", "D", "E"),
+                    ("A", "D", "F"),
+                    ("B", "C", "E"),
+                    ("B", "C", "F"),
+                    ("B", "D", "E"),
+                    ("B", "D", "F"),
+                ],
+                [["k"], ["K", "L", "M"]],
+            ),
+        ),
+    ],
+)
 def test_join_levels(names, result):
-    df0 = join_levels(gen_df(1,3))
+    df0 = join_levels(gen_df(1, 3))
     orig = vicn(df0)
 
     # * inplace=False
@@ -52,23 +66,33 @@ def test_join_levels(names, result):
     split_level(df, names=names, inplace=True)
     assert vicn(df) == result
 
+
 def test_wrong_types():
     with pytest.raises(TypeError):
-        split_level(np.array([1,2,3]))
+        split_level(np.array([1, 2, 3]))
 
     df = gen_df(2, 2)
     with pytest.raises(TypeError):
         split_level(df)
+
 
 def test_joining_multiindex_inplace():
     df = gen_df(1, 1)
     with pytest.raises(ValueError):
         split_level(df.columns, inplace=True)
 
+
 def test_split_mi():
-    df = pd.DataFrame([[1,2],[3,4]], index=pd.MultiIndex.from_arrays([['a_b','c_d']])); df
-    assert vn(split_level(df.index, ['K', 'L'])) == ([('a', 'b'), ('c', 'd')], ['K', 'L'])
-    
+    df = pd.DataFrame(
+        [[1, 2], [3, 4]], index=pd.MultiIndex.from_arrays([["a_b", "c_d"]])
+    )
+    df
+    assert vn(split_level(df.index, ["K", "L"])) == (
+        [("a", "b"), ("c", "d")],
+        ["K", "L"],
+    )
+
+
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])
-    #pytest.main(["-s", __file__ + '::test0'])
+    # pytest.main(["-s", __file__ + '::test0'])

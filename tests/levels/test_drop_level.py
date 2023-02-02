@@ -147,7 +147,7 @@ def test_drop_level_df_col():
     df = gen_df(1, 3)
     with pytest.raises(KeyError):
         drop_level(df.columns, "Q", inplace=False)
-    
+
     # * axis = None
     for i in range(3):
         df = gen_df(1, 3)
@@ -252,49 +252,58 @@ def test_drop_level_s():
     with pytest.raises(KeyError):
         drop_level(s.index, "Q", inplace=False)
 
+
 def test_drop_multiple():
     df = gen_df(1, 3)
-    df1 = drop_level(df, ['K', 'M'], axis=1)
-    assert vicn(df1) == \
-    ([[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
-    ['a', 'b'],
-    ['C', 'C', 'D', 'D', 'C', 'C', 'D', 'D'],
-    [['k'], ['L']])
+    df1 = drop_level(df, ["K", "M"], axis=1)
+    assert vicn(df1) == (
+        [[1, 2, 3, 4, 5, 6, 7, 8], [9, 10, 11, 12, 13, 14, 15, 16]],
+        ["a", "b"],
+        ["C", "C", "D", "D", "C", "C", "D", "D"],
+        [["k"], ["L"]],
+    )
+
 
 def test_drop_simple_index():
-    df = gen_df1(3,3); df
+    df = gen_df1(3, 3)
+    df
     with pytest.raises(TypeError):
         drop_level(df, axis=1, level=0)
 
+
 def test_simple_index_remaining():
     df = gen_df(1, 2)
-    df1 = drop_level(df, 'K', axis=1)
-    assert vicn(df1) == \
-    ([[1, 2, 3, 4], [5, 6, 7, 8]],
-    ['a', 'b'],
-    ['C', 'D', 'C', 'D'],
-    [['k'], ['L']])
+    df1 = drop_level(df, "K", axis=1)
+    assert vicn(df1) == (
+        [[1, 2, 3, 4], [5, 6, 7, 8]],
+        ["a", "b"],
+        ["C", "D", "C", "D"],
+        [["k"], ["L"]],
+    )
     assert not isinstance(df1.columns, pd.MultiIndex)
-    
+
     df = gen_df(1, 2)
-    drop_level(df.columns, 'K', inplace=True)
-    assert vicn(df) == \
-    ([[1, 2, 3, 4], [5, 6, 7, 8]],
-    ['a', 'b'],
-    [('C',), ('D',), ('C',), ('D',)],
-    [['k'], ['L']])
+    drop_level(df.columns, "K", inplace=True)
+    assert vicn(df) == (
+        [[1, 2, 3, 4], [5, 6, 7, 8]],
+        ["a", "b"],
+        [("C",), ("D",), ("C",), ("D",)],
+        [["k"], ["L"]],
+    )
     assert isinstance(df.columns, pd.MultiIndex)
+
 
 def test_wrong_types():
     with pytest.raises(TypeError):
-        drop_level(np.array([1,2,3]), axis=0, level_id=0)
+        drop_level(np.array([1, 2, 3]), axis=0, level_id=0)
+
 
 def test_dropping_last_level():
-    df = gen_df1(2,2)
+    df = gen_df1(2, 2)
     with pytest.raises(ValueError):
         drop_level(df, 0, axis=0)
 
-    df = gen_df(2,2)
+    df = gen_df(2, 2)
     df1 = drop_level(df, 0, axis=0)
     with pytest.raises(ValueError):
         drop_level(df1, 0, axis=0)

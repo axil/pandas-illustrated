@@ -15,7 +15,7 @@ def test_set_level_11():
 
     with pytest.raises(TypeError):
         set_level(df.index, 0, "z")
-    
+
     with pytest.raises(TypeError):
         set_level(df, 0, "z", axis=0)
 
@@ -23,7 +23,7 @@ def test_set_level_11():
 
     with pytest.raises(TypeError):
         set_level(df.columns, 0, "z")
-    
+
     with pytest.raises(TypeError):
         set_level(df, 0, "z", axis=1)
 
@@ -54,29 +54,30 @@ QRST_RESULT_NONE = [
     ([("A", "Q"), ("A", "R"), ("B", "S"), ("B", "T")], ["K", None]),
 ]
 
-@pytest.mark.parametrize("a, name, result", [
-    ("Q", "M", Q_RESULT_M),
-    ("Q", None, Q_RESULT_NONE),
-    ("Q", lib.no_default, Q_RESULT),
-    
-    (QRST, "M", QRST_RESULT_M),
-    (pd.Series(QRST), "M", QRST_RESULT_M),
-    (pd.Index(QRST), "M", QRST_RESULT_M),
-    (pd.Series(QRST, name="Z"), "M", QRST_RESULT_M),
-    (pd.Index(QRST, name="Z"), "M", QRST_RESULT_M),
 
-    (QRST, None, QRST_RESULT_NONE),
-    (pd.Series(QRST), None, QRST_RESULT_NONE),
-    (pd.Index(QRST), None, QRST_RESULT_NONE),
-    (pd.Series(QRST, name="M"), None, QRST_RESULT_NONE),
-    (pd.Index(QRST, name="M"), None, QRST_RESULT_NONE),
-    
-    (QRST, lib.no_default, QRST_RESULT),
-    (pd.Series(QRST), lib.no_default, QRST_RESULT_NONE),
-    (pd.Index(QRST), lib.no_default, QRST_RESULT_NONE),
-    (pd.Series(QRST, name="M"), lib.no_default, QRST_RESULT_M),
-    (pd.Index(QRST, name="M"), lib.no_default, QRST_RESULT_M),
-])
+@pytest.mark.parametrize(
+    "a, name, result",
+    [
+        ("Q", "M", Q_RESULT_M),
+        ("Q", None, Q_RESULT_NONE),
+        ("Q", lib.no_default, Q_RESULT),
+        (QRST, "M", QRST_RESULT_M),
+        (pd.Series(QRST), "M", QRST_RESULT_M),
+        (pd.Index(QRST), "M", QRST_RESULT_M),
+        (pd.Series(QRST, name="Z"), "M", QRST_RESULT_M),
+        (pd.Index(QRST, name="Z"), "M", QRST_RESULT_M),
+        (QRST, None, QRST_RESULT_NONE),
+        (pd.Series(QRST), None, QRST_RESULT_NONE),
+        (pd.Index(QRST), None, QRST_RESULT_NONE),
+        (pd.Series(QRST, name="M"), None, QRST_RESULT_NONE),
+        (pd.Index(QRST, name="M"), None, QRST_RESULT_NONE),
+        (QRST, lib.no_default, QRST_RESULT),
+        (pd.Series(QRST), lib.no_default, QRST_RESULT_NONE),
+        (pd.Index(QRST), lib.no_default, QRST_RESULT_NONE),
+        (pd.Series(QRST, name="M"), lib.no_default, QRST_RESULT_M),
+        (pd.Index(QRST, name="M"), lib.no_default, QRST_RESULT_M),
+    ],
+)
 def test_mi_12_QRST(a, name, result):
     # mi
     df0 = gen_df(1, 2)
@@ -103,7 +104,7 @@ def test_mi_12_QRST(a, name, result):
         idx = set_level(df.columns, i_name, a, name=name, inplace=False)
         assert vn(idx) == result[i], i
         assert vicn(df) == orig, i
-    
+
     # df, axis=None
     for i in range(2):
         df = df0.copy()
@@ -160,7 +161,7 @@ def test_mi_12_QRST(a, name, result):
         assert vicn(df) == orig, i
 
     # s
-    s0 = gen_df(1, 2).loc['a']
+    s0 = gen_df(1, 2).loc["a"]
     orig = vin(s0)
 
     for i in range(2):
@@ -185,10 +186,12 @@ def test_mi_12_QRST(a, name, result):
         assert vn(s1.index) == result[i], i
         assert vin(s) == orig, i
 
+
 def test_size_mismatch():
-    df = gen_df(2,2)
+    df = gen_df(2, 2)
     with pytest.raises(ValueError):
-        set_level(df, 'K', ['X','Y', 'Z'], axis=1)
+        set_level(df, "K", ["X", "Y", "Z"], axis=1)
+
 
 if __name__ == "__main__":
     pytest.main(["-x", "-s", __file__])  # + '::test7'])

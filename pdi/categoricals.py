@@ -86,7 +86,7 @@ def locked(obj, level=None, axis=None, categories=None, inplace=False):
         raise ValueError(
             'When "level" is specified, "axis" becomes a required argument'
         )
-    
+
     if inplace is False:
         obj = obj.copy()
 
@@ -94,9 +94,7 @@ def locked(obj, level=None, axis=None, categories=None, inplace=False):
         mis = {"index": (obj.index, categories)}
     elif isinstance(obj, pd.Index):
         if not isinstance(obj, pd.MultiIndex) and inplace is True:
-            raise ValueError(
-                "Cannot modify Index inplace, use locked(df, axis=, ...)`"
-            )
+            raise ValueError("Cannot modify Index inplace, use locked(df, axis=, ...)`")
         mis = {"index": (obj, categories)}
     elif isinstance(obj, pd.DataFrame):
         if axis is not None:
@@ -112,13 +110,13 @@ def locked(obj, level=None, axis=None, categories=None, inplace=False):
                         " of two lists of appropriate sizes"
                     )
             mis = {
-                "index": (obj.index, categories[0]), 
+                "index": (obj.index, categories[0]),
                 "columns": (obj.columns, categories[1]),
             }
     else:
         raise TypeError(
-                "The first argument must a DataFrame, a Series "
-                f"or a MultiIndex, not {type(obj)}."
+            "The first argument must a DataFrame, a Series "
+            f"or a MultiIndex, not {type(obj)}."
         )
 
     for ax, (mi, cat) in mis.items():
@@ -130,7 +128,7 @@ def locked(obj, level=None, axis=None, categories=None, inplace=False):
             if cat is not None and len(cat) != mi.nlevels:
                 raise ValueError(
                     'For level=None "categories" must be of the same len '
-                    f'as MultiIndex ({mi.nlevels}), not {len(cat)}'
+                    f"as MultiIndex ({mi.nlevels}), not {len(cat)}"
                 )
             indices = []
             for i in range(mi.nlevels):
@@ -170,13 +168,13 @@ def locked(obj, level=None, axis=None, categories=None, inplace=False):
 
 
 def lock(*args, **kwargs):
-    kwargs['inplace'] = True
+    kwargs["inplace"] = True
     return locked(*args, **kwargs)
 
 
 def vis_lock(obj, checkmark="✓"):
     """
-    Displays a checkmark next to each Index/MultiIndex level name of a DataFrame, 
+    Displays a checkmark next to each Index/MultiIndex level name of a DataFrame,
     a Series or an Index/MultiIndex object in case the level is Categorical
     """
 
@@ -211,16 +209,19 @@ def vis_lock(obj, checkmark="✓"):
                 _mark_i(mi)
     return obj1
 
+
 vis = vis_lock
+
 
 def _repr_html_wrapper(orig):
     def _repr_html_(self):
-        def append_mark(name, checkmark='✓'):
+        def append_mark(name, checkmark="✓"):
             if name is None:
                 name = checkmark
             else:
                 name = str(name) + checkmark
             return name
+
         _index_names = self.index.names
         _columns_names = self.columns.names
         for idx in self.index, self.columns:
@@ -239,22 +240,25 @@ def _repr_html_wrapper(orig):
         return res
 
     return _repr_html_
-    
+
+
 def vis_patch():
-    if not hasattr(pd.DataFrame, '_repr_html_orig'):
-        pd.DataFrame._repr_html_orig = pd.DataFrame._repr_html_ 
+    if not hasattr(pd.DataFrame, "_repr_html_orig"):
+        pd.DataFrame._repr_html_orig = pd.DataFrame._repr_html_
         pd.DataFrame._repr_html_ = _repr_html_wrapper(pd.DataFrame._repr_html_)
-#        print('patched ok')
+    #        print('patched ok')
     else:
-        raise Exception('already patched')
+        raise Exception("already patched")
+
 
 def vis_unpatch():
-    if hasattr(pd.DataFrame, '_repr_html_orig'):
+    if hasattr(pd.DataFrame, "_repr_html_orig"):
         pd.DataFrame._repr_html_ = pd.DataFrame._repr_html_orig
         del pd.DataFrame._repr_html_orig
-#        print('unpatched ok')
+    #        print('unpatched ok')
     else:
-        raise Exception('not patched')
+        raise Exception("not patched")
+
 
 def from_product(
     iterables, sortorder=None, names=lib.no_default, lock=True

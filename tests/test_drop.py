@@ -101,22 +101,33 @@ def test_multiindex2_columns():
     df1 = drop(df, columns=[("A", "D"), ("B", "C")])
     assert vic(df1) == ([[1, 4], [5, 8]], ["a", "b"], [("A", "C"), ("B", "D")])
 
+
 def test_raises():
     df = gen_df(1, 2)
     with pytest.raises(TypeError):
         _drop(df)
-    
+
     with pytest.raises(TypeError):
         _drop(df, items="A", like="B", axis=1)
-    
+
     with pytest.raises(TypeError):
         drop(df, columns="A", columns_re="B")
 
+
 def test_missing_axis():
-    df = gen_df1(3,3)
-    
-    assert vic(_drop(df, 'B')) == ([[1, 3], [4, 6], [7, 9]], ['a', 'b', 'c'], ['A', 'C'])
-    assert vic(drop(df, columns='B')) == ([[1, 3], [4, 6], [7, 9]], ['a', 'b', 'c'], ['A', 'C'])
+    df = gen_df1(3, 3)
+
+    assert vic(_drop(df, "B")) == (
+        [[1, 3], [4, 6], [7, 9]],
+        ["a", "b", "c"],
+        ["A", "C"],
+    )
+    assert vic(drop(df, columns="B")) == (
+        [[1, 3], [4, 6], [7, 9]],
+        ["a", "b", "c"],
+        ["A", "C"],
+    )
+
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

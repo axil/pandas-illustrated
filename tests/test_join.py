@@ -136,20 +136,23 @@ def test_suffixes():
         ["X", "Y_b", "Y_c"],
     )
 
+
 def test_1to1():
-    df = pd.DataFrame(range2d(3,2), columns=list('AB'))
-    df1 = pd.DataFrame(range2d(3,2), columns=list('AC'))
-    df2 = pd.DataFrame(range2d(3,2), columns=list('AD'))
+    df = pd.DataFrame(range2d(3, 2), columns=list("AB"))
+    df1 = pd.DataFrame(range2d(3, 2), columns=list("AC"))
+    df2 = pd.DataFrame(range2d(3, 2), columns=list("AD"))
     df1.C *= 2
     df2.D *= 3
-    df1.set_index('A', inplace=True)
-    df2.set_index('A', inplace=True)
+    df1.set_index("A", inplace=True)
+    df2.set_index("A", inplace=True)
 
-    df3 = join((df, df1, df2), on='A')
-    assert vic(df3) == \
-        ([[1, 2, 4, 6], [3, 4, 8, 12], [5, 6, 12, 18]],
+    df3 = join((df, df1, df2), on="A")
+    assert vic(df3) == (
+        [[1, 2, 4, 6], [3, 4, 8, 12], [5, 6, 12, 18]],
         [0, 1, 2],
-        ['A', 'B', 'C', 'D'])
+        ["A", "B", "C", "D"],
+    )
+
 
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])

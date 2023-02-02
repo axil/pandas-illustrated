@@ -6,61 +6,87 @@ from pdi import set_level, get_level, drop_level, swap_levels, swap_levels
 from pdi.testing import gen_df, vn, vin, vicn
 
 
-RESULTS = \
-{(0,
-  1): ([('C', 'A', 'E'),
-   ('C', 'A', 'F'),
-   ('D', 'A', 'E'),
-   ('D', 'A', 'F'),
-   ('C', 'B', 'E'),
-   ('C', 'B', 'F'),
-   ('D', 'B', 'E'),
-   ('D', 'B', 'F')], ['L', 'K', 'M']),
- (0,
-  2): ([('E', 'C', 'A'),
-   ('F', 'C', 'A'),
-   ('E', 'D', 'A'),
-   ('F', 'D', 'A'),
-   ('E', 'C', 'B'),
-   ('F', 'C', 'B'),
-   ('E', 'D', 'B'),
-   ('F', 'D', 'B')], ['M', 'L', 'K']),
- (1,
-  0): ([('C', 'A', 'E'),
-   ('C', 'A', 'F'),
-   ('D', 'A', 'E'),
-   ('D', 'A', 'F'),
-   ('C', 'B', 'E'),
-   ('C', 'B', 'F'),
-   ('D', 'B', 'E'),
-   ('D', 'B', 'F')], ['L', 'K', 'M']),
- (1,
-  2): ([('A', 'E', 'C'),
-   ('A', 'F', 'C'),
-   ('A', 'E', 'D'),
-   ('A', 'F', 'D'),
-   ('B', 'E', 'C'),
-   ('B', 'F', 'C'),
-   ('B', 'E', 'D'),
-   ('B', 'F', 'D')], ['K', 'M', 'L']),
- (2,
-  0): ([('E', 'C', 'A'),
-   ('F', 'C', 'A'),
-   ('E', 'D', 'A'),
-   ('F', 'D', 'A'),
-   ('E', 'C', 'B'),
-   ('F', 'C', 'B'),
-   ('E', 'D', 'B'),
-   ('F', 'D', 'B')], ['M', 'L', 'K']),
- (2,
-  1): ([('A', 'E', 'C'),
-   ('A', 'F', 'C'),
-   ('A', 'E', 'D'),
-   ('A', 'F', 'D'),
-   ('B', 'E', 'C'),
-   ('B', 'F', 'C'),
-   ('B', 'E', 'D'),
-   ('B', 'F', 'D')], ['K', 'M', 'L'])}
+RESULTS = {
+    (0, 1): (
+        [
+            ("C", "A", "E"),
+            ("C", "A", "F"),
+            ("D", "A", "E"),
+            ("D", "A", "F"),
+            ("C", "B", "E"),
+            ("C", "B", "F"),
+            ("D", "B", "E"),
+            ("D", "B", "F"),
+        ],
+        ["L", "K", "M"],
+    ),
+    (0, 2): (
+        [
+            ("E", "C", "A"),
+            ("F", "C", "A"),
+            ("E", "D", "A"),
+            ("F", "D", "A"),
+            ("E", "C", "B"),
+            ("F", "C", "B"),
+            ("E", "D", "B"),
+            ("F", "D", "B"),
+        ],
+        ["M", "L", "K"],
+    ),
+    (1, 0): (
+        [
+            ("C", "A", "E"),
+            ("C", "A", "F"),
+            ("D", "A", "E"),
+            ("D", "A", "F"),
+            ("C", "B", "E"),
+            ("C", "B", "F"),
+            ("D", "B", "E"),
+            ("D", "B", "F"),
+        ],
+        ["L", "K", "M"],
+    ),
+    (1, 2): (
+        [
+            ("A", "E", "C"),
+            ("A", "F", "C"),
+            ("A", "E", "D"),
+            ("A", "F", "D"),
+            ("B", "E", "C"),
+            ("B", "F", "C"),
+            ("B", "E", "D"),
+            ("B", "F", "D"),
+        ],
+        ["K", "M", "L"],
+    ),
+    (2, 0): (
+        [
+            ("E", "C", "A"),
+            ("F", "C", "A"),
+            ("E", "D", "A"),
+            ("F", "D", "A"),
+            ("E", "C", "B"),
+            ("F", "C", "B"),
+            ("E", "D", "B"),
+            ("F", "D", "B"),
+        ],
+        ["M", "L", "K"],
+    ),
+    (2, 1): (
+        [
+            ("A", "E", "C"),
+            ("A", "F", "C"),
+            ("A", "E", "D"),
+            ("A", "F", "D"),
+            ("B", "E", "C"),
+            ("B", "F", "C"),
+            ("B", "E", "D"),
+            ("B", "F", "D"),
+        ],
+        ["K", "M", "L"],
+    ),
+}
+
 
 def test_swap_levels_mi():
     df0 = gen_df(1, 3)
@@ -155,7 +181,7 @@ def test_swap_levels_df_col():
     df = df0.copy()
     with pytest.raises(TypeError):
         swap_levels(df, "k", "k", axis=0, inplace=True)
-    
+
     # * inplace = False
     #   - by positional index
     for i in range(3):
@@ -182,7 +208,7 @@ def test_swap_levels_df_col():
     df = df0.copy()
     with pytest.raises(KeyError):
         swap_levels(df, "K", "Q", axis=1, inplace=False)
-    
+
     # * axis=None
     for i in range(3):
         for j in range(3):
@@ -190,7 +216,6 @@ def test_swap_levels_df_col():
                 df = df0.copy()
                 swap_levels(df, i, j, inplace=True)
                 assert vn(df.columns) == RESULTS[i, j], (i, j)
-
 
 
 def test_swap_levels_df_row():
@@ -213,7 +238,7 @@ def test_swap_levels_df_row():
     df = df0.copy()
     with pytest.raises(TypeError):
         swap_levels(df, 1, 0, axis=1, inplace=True)
-    
+
     #   - by name
     for i, i_name in enumerate("KLM"):
         for j, j_name in enumerate("KLM"):
@@ -229,7 +254,7 @@ def test_swap_levels_df_row():
     df = df0.copy()
     with pytest.raises(TypeError):
         swap_levels(df, "k", "k", axis=1, inplace=True)
-    
+
     # * inplace = False
     #   - by positional index
     for i in range(3):
@@ -259,7 +284,7 @@ def test_swap_levels_df_row():
 
 
 def test_swap_levels_s():
-    s0 = gen_df(1, 3).loc['a']
+    s0 = gen_df(1, 3).loc["a"]
     orig = vin(s0)
 
     # * inplace = True
@@ -314,64 +339,91 @@ def test_swap_levels_s():
     with pytest.raises(KeyError):
         swap_levels(s, "K", "Q", axis=0, inplace=False)
 
-SORTED_RESULTS = \
-{(0,
-  1): ([('C', 'A', 'E'),
-   ('C', 'A', 'F'),
-   ('C', 'B', 'E'),
-   ('C', 'B', 'F'),
-   ('D', 'A', 'E'),
-   ('D', 'A', 'F'),
-   ('D', 'B', 'E'),
-   ('D', 'B', 'F')], ['L', 'K', 'M']),
- (0,
-  2): ([('E', 'C', 'A'),
-   ('E', 'C', 'B'),
-   ('E', 'D', 'A'),
-   ('E', 'D', 'B'),
-   ('F', 'C', 'A'),
-   ('F', 'C', 'B'),
-   ('F', 'D', 'A'),
-   ('F', 'D', 'B')], ['M', 'L', 'K']),
- (1,
-  0): ([('C', 'A', 'E'),
-   ('C', 'A', 'F'),
-   ('C', 'B', 'E'),
-   ('C', 'B', 'F'),
-   ('D', 'A', 'E'),
-   ('D', 'A', 'F'),
-   ('D', 'B', 'E'),
-   ('D', 'B', 'F')], ['L', 'K', 'M']),
- (1,
-  2): ([('A', 'E', 'C'),
-   ('A', 'E', 'D'),
-   ('A', 'F', 'C'),
-   ('A', 'F', 'D'),
-   ('B', 'E', 'C'),
-   ('B', 'E', 'D'),
-   ('B', 'F', 'C'),
-   ('B', 'F', 'D')], ['K', 'M', 'L']),
- (2,
-  0): ([('E', 'C', 'A'),
-   ('E', 'C', 'B'),
-   ('E', 'D', 'A'),
-   ('E', 'D', 'B'),
-   ('F', 'C', 'A'),
-   ('F', 'C', 'B'),
-   ('F', 'D', 'A'),
-   ('F', 'D', 'B')], ['M', 'L', 'K']),
- (2,
-  1): ([('A', 'E', 'C'),
-   ('A', 'E', 'D'),
-   ('A', 'F', 'C'),
-   ('A', 'F', 'D'),
-   ('B', 'E', 'C'),
-   ('B', 'E', 'D'),
-   ('B', 'F', 'C'),
-   ('B', 'F', 'D')], ['K', 'M', 'L'])}
+
+SORTED_RESULTS = {
+    (0, 1): (
+        [
+            ("C", "A", "E"),
+            ("C", "A", "F"),
+            ("C", "B", "E"),
+            ("C", "B", "F"),
+            ("D", "A", "E"),
+            ("D", "A", "F"),
+            ("D", "B", "E"),
+            ("D", "B", "F"),
+        ],
+        ["L", "K", "M"],
+    ),
+    (0, 2): (
+        [
+            ("E", "C", "A"),
+            ("E", "C", "B"),
+            ("E", "D", "A"),
+            ("E", "D", "B"),
+            ("F", "C", "A"),
+            ("F", "C", "B"),
+            ("F", "D", "A"),
+            ("F", "D", "B"),
+        ],
+        ["M", "L", "K"],
+    ),
+    (1, 0): (
+        [
+            ("C", "A", "E"),
+            ("C", "A", "F"),
+            ("C", "B", "E"),
+            ("C", "B", "F"),
+            ("D", "A", "E"),
+            ("D", "A", "F"),
+            ("D", "B", "E"),
+            ("D", "B", "F"),
+        ],
+        ["L", "K", "M"],
+    ),
+    (1, 2): (
+        [
+            ("A", "E", "C"),
+            ("A", "E", "D"),
+            ("A", "F", "C"),
+            ("A", "F", "D"),
+            ("B", "E", "C"),
+            ("B", "E", "D"),
+            ("B", "F", "C"),
+            ("B", "F", "D"),
+        ],
+        ["K", "M", "L"],
+    ),
+    (2, 0): (
+        [
+            ("E", "C", "A"),
+            ("E", "C", "B"),
+            ("E", "D", "A"),
+            ("E", "D", "B"),
+            ("F", "C", "A"),
+            ("F", "C", "B"),
+            ("F", "D", "A"),
+            ("F", "D", "B"),
+        ],
+        ["M", "L", "K"],
+    ),
+    (2, 1): (
+        [
+            ("A", "E", "C"),
+            ("A", "E", "D"),
+            ("A", "F", "C"),
+            ("A", "F", "D"),
+            ("B", "E", "C"),
+            ("B", "E", "D"),
+            ("B", "F", "C"),
+            ("B", "F", "D"),
+        ],
+        ["K", "M", "L"],
+    ),
+}
+
 
 def test_swap_levels_s_sort():
-    s0 = gen_df(1, 3).loc['a']
+    s0 = gen_df(1, 3).loc["a"]
     orig = vin(s0)
 
     # * inplace = True
@@ -426,15 +478,18 @@ def test_swap_levels_s_sort():
     with pytest.raises(KeyError):
         swap_levels(s, "K", "Q", axis=0, inplace=False, sort=True)
 
+
 def test_wrong_types():
     with pytest.raises(TypeError):
-        swap_levels(np.array([1,2,3]))
+        swap_levels(np.array([1, 2, 3]))
+
 
 def test_sort_multiindex():
-    df = gen_df(2,2)
+    df = gen_df(2, 2)
     with pytest.raises(ValueError):
         swap_levels(df.columns, 0, 1, sort=True)
 
+
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])
-    #pytest.main(["-s", __file__ + '::test0'])
+    # pytest.main(["-s", __file__ + '::test0'])
