@@ -4,8 +4,8 @@ from numpy import inf
 import pandas as pd
 from pandas._libs import lib
 
-from pdi import insert, append, locked
-from pdi.testing import range2d, gen_df1, vi, vic, vin, vicn
+from pdi import insert, append, locked, lock
+from pdi.testing import range2d, gen_df1, vi, vic, vin, vicn, gen_df
 
 
 @pytest.mark.parametrize("row", [
@@ -431,6 +431,12 @@ def test_allow_duplicates():
     s2 = insert(s, 0, s1, allow_duplicates=True)
     assert vin(s2) == ([11, 12, 20, 30], [0, 1, 0, 1], 'A')
 
+    df = pd.DataFrame(range2d(3,3))
+    with pytest.raises(ValueError):
+        insert(df, 0, df[:2])
+    with pytest.raises(ValueError):
+        insert(df, 0, df.loc[:, :2], axis=1)
+
 def test_label_required():
     s = pd.Series([1, 2, 3], name='A')
     s1 = insert(s, 0, 10)
@@ -603,6 +609,10 @@ def test_insert_scalar():
         ['a', 'b', 'z', 'c'],
         ['A', 'B', 'C'])
 
+    df = gen_df1(2,3)
+    assert vic(insert(df, 2, 7, axis=1, label='D')) == \
+        ([[1, 2, 7, 3], [4, 5, 7, 6]], ['a', 'b'], ['A', 'B', 'D', 'C'])
+
 def test_append():
     df = gen_df1(2,3)
     df1 = append(df, pd.DataFrame([[7,8],[9,10]], columns=['D','E'], index=['a', 'b']), axis=1)
@@ -650,6 +660,43 @@ def test_categoricals(col):
         df = df0.copy()
         df1 = insert(df, 2, col, 'D', axis=1, order='strict')
 
+def test_mi():
+    df = gen_df(2,1)
+    df1 = insert(df, 1, [[9,10],[11,12]], label=[('d','e'),('f','g')])
+    assert vicn(df1) == \
+        ([[1, 2], [9, 10], [11, 12], [3, 4], [5, 6], [7, 8]],
+        [('a', 'c'), ('d', 'e'), ('f', 'g'), ('a', 'd'), ('b', 'c'), ('b', 'd')],
+        ['A', 'B'],
+        [['k', 'l'], ['K']])
+
+def test_unordered():
+    df = gen_df1(2,3)
+    df.columns = pd.CategoricalIndex(['A', 'B', 'C'], categories=['A', 'B', 'C'], 
+            ordered=False, dtype='category')
+    df1 = insert(df, 1, [7,8], axis=1, label='D', order='first')
+    assert df1.columns.categories.tolist() == ['A', 'B', 'C', 'D']
+
+def test_guess():
+    df = gen_df1(2,3)
+    lock(df)
+    df1 = insert(df, 0, [7, 8], axis=1, label='D', order='guess')
+    assert df1.columns.categories.tolist() == ['D', 'A', 'B', 'C']
+
+    df = gen_df1(3,2)
+    lock(df)
+    df1 = df.sort_index(axis=0, ascending=False)
+    df2 = insert(df1, 0, [7, 8], axis=0, label='d', order='guess')
+    assert df2.index.categories.tolist() == ['d', 'a', 'b', 'c']
+
+    df = gen_df1(2,2)
+    lock(df)
+    with pytest.raises(ValueError):
+        df1 = insert(df, 0, [7,8], axis=1, label='D', order='zzz')
+
+def test_ignore_columns():
+    df = gen_df1(3, 3)
+    with pytest.raises(ValueError):
+        insert(df, 0, [1,2,3], axis=1, ignore_index=True)
     
 if __name__ == "__main__":
     #pytest.main(["-x", "-s", __file__])  # + '::test7'])

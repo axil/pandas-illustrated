@@ -282,15 +282,13 @@ def drop_level(obj, level_id, axis=None, inplace=False):
         if axis is None:
             axis = obj._info_axis_name
         ax, mi = obj._get_axis_name(axis), obj._get_axis(axis)
-        if not isinstance(mi, pd.MultiIndex):
-            raise TypeError(f"MultiIndex expected in the {ax}, got {type(mi)}.")
         if inplace is False:
             obj = obj.copy()
         index = drop_level(mi, level_id, inplace=False)
         setattr(obj, ax, index)
         if not inplace:
             return obj
-    elif isinstance(obj, pd.MultiIndex):
+    elif isinstance(obj, pd.Index):
         ax, mi = "index", obj
     else:
         raise TypeError("The first argument must a DataFrame, a Series or "
@@ -302,6 +300,12 @@ def drop_level(obj, level_id, axis=None, inplace=False):
 
     to_drop = [mi._get_level_number(lev) for lev in level_id]
     
+    if mi.nlevels - len(to_drop) < 1:
+        raise ValueError(
+            f'Cannot remove {len(to_drop)} level(s) from an index with {mi.nlevels} level(s): '
+            'at least one level must be left.'
+        )
+
     levels = []
     for i in range(mi.nlevels):
         if i not in to_drop:
@@ -526,14 +530,14 @@ def split_level(obj, names=None, sep='_', axis=None, inplace=False):
     else:
         return idx
 
-def rename_level(obj, mapping, axis=None, inplace=False):
+def rename_level(obj, mapping, level_id=None, axis=None, inplace=False):
     if isinstance(obj, (pd.Series, pd.DataFrame)):
         if axis is None:
             axis = obj._info_axis_name
         ax, mi = obj._get_axis_name(axis), obj._get_axis(axis)
         if inplace is False:
             obj = obj.copy()
-        index = rename_level(mi, mapping, inplace=False)
+        index = rename_level(mi, mapping, level_id=level_id, inplace=False)
         setattr(obj, ax, index)
         return None if inplace else obj
     elif isinstance(obj, pd.MultiIndex):
@@ -546,7 +550,11 @@ def rename_level(obj, mapping, axis=None, inplace=False):
         )
     
     if isinstance(mi, pd.MultiIndex):
-        if isinstance(mapping, dict):
+        if level_id is not None:
+            if not is_scalar(mapping):
+                raise TypeError('If level_id is given, `mapping` must be a scalar')
+            idx = mi.set_names(mapping, level=level_id)
+        elif isinstance(mapping, dict):
             levels, names = list(mapping.keys()), list(mapping.values())
             idx = mi.set_names(names, level=levels)
         elif mi.nlevels == 1 and is_scalar(mapping):

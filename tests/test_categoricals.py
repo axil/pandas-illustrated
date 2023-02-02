@@ -593,6 +593,11 @@ def test_vis_patch():
     with pytest.raises(Exception):
         vis_unpatch()
 
+def test_lock_mi_inplace():
+    df = gen_df(2, 2)
+    lock(df.columns)
+    assert list(vis(df).columns.names) == ['K✓', 'L✓']
+
 if __name__ == "__main__":
     pytest.main(["-x", "-s", __file__])# + '::test_vis_lock2'])
 #    pytest.main(["-x", "-s", __file__ + '::test_vis_lock2'])

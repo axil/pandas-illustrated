@@ -287,7 +287,17 @@ def test_simple_index_remaining():
 
 def test_wrong_types():
     with pytest.raises(TypeError):
-        drop_level(np.array([1,2,3]), axis=0, level=0)
+        drop_level(np.array([1,2,3]), axis=0, level_id=0)
+
+def test_dropping_last_level():
+    df = gen_df1(2,2)
+    with pytest.raises(ValueError):
+        drop_level(df, 0, axis=0)
+
+    df = gen_df(2,2)
+    df1 = drop_level(df, 0, axis=0)
+    with pytest.raises(ValueError):
+        drop_level(df1, 0, axis=0)
 
 
 if __name__ == "__main__":

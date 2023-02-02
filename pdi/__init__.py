@@ -378,16 +378,11 @@ def insert(
                 msg += '.'
         else:
             if axis == 0:
-                msg = "Duplicates detected in the index. Consider `ignore_index=True`"
-                if label is lib.no_default:
-                    msg += " or provide index label(s) manually in the `label` argument."
-                else:
-                    msg += '.'
+                msg = "Duplicates detected in the index. Consider `ignore_index=True`" \
+                      " or provide index label(s) manually in the `label` argument."
             else:
-                msg = "Duplicates detected in the index."
-                if label is lib.no_default:
-                    msg += " Consider providing column label(s) manually in the " \
-                           "`label` argument."
+                msg = "Duplicates detected in the columns. Consider providing column " \
+                      "label(s) manually in the `label` argument."
         raise ValueError(msg)
 
     if pos == n:  # just for speed, not really necessary

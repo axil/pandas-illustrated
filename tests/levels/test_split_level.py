@@ -64,6 +64,10 @@ def test_joining_multiindex_inplace():
     df = gen_df(1, 1)
     with pytest.raises(ValueError):
         split_level(df.columns, inplace=True)
+
+def test_split_mi():
+    df = pd.DataFrame([[1,2],[3,4]], index=pd.MultiIndex.from_arrays([['a_b','c_d']])); df
+    assert vn(split_level(df.index, ['K', 'L'])) == ([('a', 'b'), ('c', 'd')], ['K', 'L'])
     
 if __name__ == "__main__":
     pytest.main(["-s", __file__])  # + '::test7'])
