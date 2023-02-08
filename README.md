@@ -16,42 +16,45 @@ This repo contains code for a number of helper functions mentioned in the [Panda
 ## Contents
 
 Basic operations:
-- find
-- findall
-- insert
-- drop
-- move
-- join
+- find(s, x, pos=False)
+- findall(s, x, pos=False)
+- insert(dst, pos, value, label, axis=0, ignore_index = False, 
+    order=None, allow_duplicates=False, inplace=False)
+- append(dst, value, label = lib.no_default, axis=0, ignore_index = False,
+    order=None, allow_duplicates: bool = False, inplace=False)
+- drop(obj, items=None, like=None, regex=None, axis=None)
+- move(obj, pos, label=None, column=None, index=None, axis=None, reset_index=False)
+- join(dfs, on=None, how="left", suffixes=None)
 
 Visualization improvements:
-- patch_series_repr
-- unpatch_series_repr
-- sidebyside
-- sbs
+- patch_series_repr(footer=True)
+- unpatch_series_repr()
+- sidebyside(*dfs, names=[], index=True, valign="top")
+- sbs = sidebyside
 
 MultiIndex helpers:
 - patch_mi_co
-- from_dict
-- from_kw
+- from_dict(d)
+- from_kw(**kwargs)
 
 Locking columns order:
-- locked
-- lock
-- vis_lock
-- vis_patch
-- vis_unpatch
-- from_product
+- locked(obj, level=None, axis=None, categories=None, inplace=False)
+- lock = locked with inplace=True
+- vis_lock(obj, checkmark="✓")
+- vis_patch()
+- vis_unpatch()
+- from_product(iterables, sortorder=None, names=lib.no_default, lock=True)
 
 Level manipulations:
-- get_level
-- set_level
-- move_level
-- insert_level
-- drop_level
-- swap_levels
-- join_levels
-- split_level
-- rename_level
+- get_level(obj, level_id, axis=None)
+- set_level(obj, level_id, labels, name=lib.no_default, axis=None, inplace=False)
+- move_level(obj, src, dst, axis=None, inplace=False, sort=False)
+- insert_level(obj, pos, labels, name=lib.no_default, axis=None, inplace=False, sort=False)
+- drop_level(obj, level_id, axis=None, inplace=False)
+- swap_levels(obj, i: Axis = -2, j: Axis = -1, axis: Axis = None, inplace=False, sort=False)
+- join_levels(obj, name=None, sep="_", axis=None, inplace=False)
+- split_level(obj, names=None, sep="_", axis=None, inplace=False)
+- rename_level(obj, mapping, level_id=None, axis=None, inplace=False)
 
 
 ## Usage
