@@ -45,7 +45,7 @@ Locking columns order:
 - `vis_unpatch()`
 - `from_product(iterables, sortorder=None, names=lib.no_default, lock=True)`
 
-Level manipulations:
+MultiIndex manipulations:
 - `get_level(obj, level_id, axis=None)`
 - `set_level(obj, level_id, labels, name=lib.no_default, axis=None, inplace=False)`
 - `move_level(obj, src, dst, axis=None, inplace=False, sort=False)`
