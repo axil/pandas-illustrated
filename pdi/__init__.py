@@ -44,6 +44,7 @@ from .levels import (
     join_levels,
     split_level,
     rename_level,
+    minfo,
 )
 
 __all__ = [

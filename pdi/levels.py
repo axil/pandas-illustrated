@@ -55,7 +55,7 @@ def get_level(obj, level_id, axis=None):
     return mi.get_level_values(level_id)
 
 
-def set_level(obj, level_id, labels, name=lib.no_default, axis=None, inplace=False):
+def set_level(obj, level_id, labels, name=lib.no_default, axis=None, inplace=True):
     """
     Replaces a complete level of a MultiIndex.
 
@@ -84,7 +84,7 @@ def set_level(obj, level_id, labels, name=lib.no_default, axis=None, inplace=Fal
         None = index for Series, columns for DataFrame.
 
     inplace :
-        Return a fresh copy or modify inplace. If mi is a simple pd.Index
+        Return a fresh copy or modify inplace. If obj is a simple pd.Index
         (=not a MultiIndex) always returns a copy because the Index is immutable.
     """
     if isinstance(obj, (pd.Series, pd.DataFrame)):
@@ -594,3 +594,16 @@ def rename_level(obj, mapping, level_id=None, axis=None, inplace=False):
         )
     else:
         return idx
+
+
+def minfo(obj, prefix=''):
+    if isinstance(obj, pd.DataFrame):
+        print('Columns:')
+        minfo(obj.columns, '  - ')
+        print('Index:')
+        minfo(obj.index, '  - ')
+    else:
+        for i in range(obj.nlevels):
+            level = get_level(obj, i)
+            print(prefix + f'{level.name}:', level.nunique(), 'values from', level[0], 'to', level[-1], end='')
+            print(', dtype =', level.dtype)
