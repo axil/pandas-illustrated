@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 from typing import Hashable, Sequence
 
+__version__ = '0.5'
+
 from pandas._typing import (
     AnyArrayLike,
     Axis,

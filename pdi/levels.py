@@ -606,4 +606,4 @@ def minfo(obj, prefix=''):
         for i in range(obj.nlevels):
             level = get_level(obj, i)
             print(prefix + f'{level.name}:', level.nunique(), 'values from', level[0], 'to', level[-1], end='')
-            print(', dtype =', level.dtype)
+            print(f', dtype={level.dtype}')

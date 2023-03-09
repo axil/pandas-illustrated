@@ -1,2 +1,3 @@
 ﻿0.3 added np.array support in pdi.find
 0.4 rename level by position, 100% coverage
+0.5 set_level inplace=True by default, added minfo()
