@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from typing import Hashable, Sequence
 
-__version__ = '0.5'
+__version__ = "0.6"
 
 from pandas._typing import (
     AnyArrayLike,
@@ -79,6 +79,7 @@ __all__ = [
     "join_levels",
     "split_level",
     "rename_level",
+    "minfo",
 ]
 
 
@@ -547,21 +548,34 @@ def join(dfs, on=None, how="left", suffixes=None):
 
 
 class Mi:
-    def __init__(self, df):
+    def __init__(self, df, drop_level=False):
         self.df = df
+        self.drop_level = drop_level
 
     def __repr__(self):
         return "Row indexer"
 
     def __getitem__(self, args):
-        return self.df.loc[args, :]
+        res = self.df.loc[args, :]
+        if self.drop_level:
+            to_drop = []
+            slices_present = False
+            for i, arg in enumerate(args):
+                if isinstance(arg, slice):
+                    slices_present = True
+                elif pd.api.types.is_scalar(arg):
+                    to_drop.append(i)
+            if slices_present and to_drop and len(to_drop) != self.df.index.nlevels:
+                for level in reversed(to_drop):
+                    drop_level(res.index, level, inplace=True)
+        return res
 
     def __setitem__(self, k, v):
         self.df.loc[k, :] = v
 
     def __call__(self, *args, **kwargs):
         levels, keys = tuple(kwargs.keys()), tuple(kwargs.values())
-        return self.df.xs(keys, level=levels, drop_level=False)
+        return self.df.xs(keys, level=levels, drop_level=self.drop_level)
 
 
 @property
@@ -601,22 +615,72 @@ def get_mi(self):
     return Mi(self)
 
 
+@property
+def get_mi_(self):
+    """
+    Helps indexing MultiIndex in the rows (read and write access).
+    Same policy for keeping and removing the filtered levels as in `.loc`.
+    e.g. df.mi[:, 'a', :] returns all rows that have 'a' in the second level:
+
+    >>> df
+           A  B
+    k l m
+    a d g  1  2
+    b e h  3  4
+    c d i  5  6
+
+    >>> df.mi[:, 'a', :]
+           A  B
+    k l m
+    a d g  1  2
+    c d i  5  6
+
+    >>> df.mi[:, 'a', :] = 0
+    >>> df
+           A  B
+    k l m
+    a d g  0  0
+    b e h  3  4
+    c d i  0  0
+
+    Careful: once the result is created, it becomes a copy, so its changes
+    are not propagated to the original dataframe.
+
+    Also you can use df.mi_(k='a'). Always keeps all the levels. Not writable.
+    If you don't need some levels, you can drop them with pdi.drop_level()
+    """
+    return Mi(self, drop_level=True)
+
+
 class Co:
-    def __init__(self, df):
+    def __init__(self, df, drop_level=False):
         self.df = df
+        self.drop_level = drop_level
 
     def __repr__(self):
         return "Column indexer"
 
     def __getitem__(self, args):
-        return self.df.loc[:, args]
+        res = self.df.loc[:, args]
+        if self.drop_level:
+            to_drop = []
+            slices_present = False
+            for i, arg in enumerate(args):
+                if isinstance(arg, slice):
+                    slices_present = True
+                elif pd.api.types.is_scalar(arg):
+                    to_drop.append(i)
+            if slices_present and to_drop and len(to_drop) != self.df.columns.nlevels:
+                for level in reversed(to_drop):
+                    drop_level(res.columns, level, inplace=True)
+        return res
 
     def __setitem__(self, k, v):
         self.df.loc[:, k] = v
 
     def __call__(self, *args, **kwargs):
         levels, keys = tuple(kwargs.keys()), tuple(kwargs.values())
-        return self.df.xs(keys, level=levels, drop_level=False, axis=1)
+        return self.df.xs(keys, level=levels, drop_level=self.drop_level, axis=1)
 
 
 @property
@@ -657,10 +721,51 @@ def get_co(self):
     return Co(self)
 
 
+@property
+def get_co_(self):
+    """
+    Helps indexing MultiIndex in the colums (read and write access).
+    Same policy for keeping and removing the filtered levels as in `.loc`.
+    e.g. df.co[:, 'a', :] returns all columns that have 'a' in the second level:
+
+    >>> df
+    K  A               B
+    L  C       D       C       D
+    M  E   F   E   F   E   F   E   F
+    a  1   2   3   4   5   6   7   8
+    b  9  10  11  12  13  14  15  16
+
+    >>> df.co[:, 'C', :]
+    K  A       B
+    L  C       C
+    M  E   F   E   F
+    a  1   2   5   6
+    b  9  10  13  14
+
+    >>> df.co[:, 'C', :] = 0
+    >>> df
+    K  A             B
+    L  C      D      C      D
+    M  E  F   E   F  E  F   E   F
+    a  0  0   3   4  0  0   7   8
+    b  0  0  11  12  0  0  15  16
+
+    Careful: once the result is created, it becomes a copy, so its changes
+    are not propagated to the original dataframe.
+
+    Also you can use df.co_(K='A'). Always keeps all the levels. Not writable.
+    If you don't need some levels, you can drop them with pdi.drop_level()
+    """
+    return Co(self, drop_level=True)
+
+
 def patch_mi_co():
     pd.DataFrame.mi = get_mi
+    pd.DataFrame.mi_ = get_mi_
     pd.DataFrame.co = get_co
+    pd.DataFrame.co_ = get_co_
     pd.Series.mi = get_mi
+    pd.Series.mi_ = get_mi_
 
 
 def from_dict(d):

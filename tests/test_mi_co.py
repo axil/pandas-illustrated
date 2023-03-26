@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from pdi import patch_mi_co
-from pdi.testing import gen_df, vic
+from pdi.testing import gen_df, vic, vin, vicn
 import pdi
 
 
@@ -98,7 +98,6 @@ def test_patch_series():
 
 def test_assignments():
     df = gen_df(1, 3)
-    df
     df.co[:, "C", :] = 0
     assert vic(df) == (
         [[0, 0, 3, 4, 0, 0, 7, 8], [0, 0, 11, 12, 0, 0, 15, 16]],
@@ -116,7 +115,6 @@ def test_assignments():
     )
 
     df = gen_df(3, 1)
-    df
     df.mi[:, "d", :] = 0
     assert vic(df) == (
         [[1, 2], [3, 4], [0, 0], [0, 0], [9, 10], [11, 12], [0, 0], [0, 0]],
@@ -137,6 +135,98 @@ def test_assignments():
 def test_from_not_dict():
     with pytest.raises(TypeError):
         pdi.from_dict("hmm")
+
+
+def test_mi_():
+    patch_mi_co()
+    df = gen_df(3, 1)
+
+    assert vicn(df.mi_["a"]) == (
+        [[1, 2], [3, 4], [5, 6], [7, 8]],
+        [("c", "e"), ("c", "f"), ("d", "e"), ("d", "f")],
+        ["A", "B"],
+        [["l", "m"], ["K"]],
+    )
+
+    assert vicn(df.mi_["a", "c"]) == (
+        [[1, 2], [3, 4]],
+        ["e", "f"],
+        ["A", "B"],
+        [["m"], ["K"]],
+    )
+
+    assert isinstance(df.mi_["a", "c", "e"], pd.Series)
+
+    assert vin(df.mi_["a", "c", "e"]) == ([1, 2], ["A", "B"], ("a", "c", "e"))
+
+    assert vicn(df.mi_[:, "c", :]) == (
+        [[1, 2], [3, 4], [9, 10], [11, 12]],
+        [("a", "e"), ("a", "f"), ("b", "e"), ("b", "f")],
+        ["A", "B"],
+        [["k", "m"], ["K"]],
+    )
+
+    assert vicn(df.mi_[:, "c", "a":"z"]) == (
+        [[1, 2], [3, 4], [9, 10], [11, 12]],
+        [("a", "e"), ("a", "f"), ("b", "e"), ("b", "f")],
+        ["A", "B"],
+        [["k", "m"], ["K"]],
+    )
+
+    assert vicn(df.mi_[:, "c", "a":"e"]) == (
+        [[1, 2], [9, 10]],
+        [("a", "e"), ("b", "e")],
+        ["A", "B"],
+        [["k", "m"], ["K"]],
+    )
+
+    assert vicn(df.mi_[:, :, :]) == vicn(df)
+
+
+def test_co_():
+    patch_mi_co()
+    df = gen_df(1, 3)
+
+    assert vicn(df.co_["A"]) == (
+        [[1, 2, 3, 4], [9, 10, 11, 12]],
+        ["a", "b"],
+        [("C", "E"), ("C", "F"), ("D", "E"), ("D", "F")],
+        [["k"], ["L", "M"]],
+    )
+
+    assert vicn(df.co_["A", "C"]) == (
+        [[1, 2], [9, 10]],
+        ["a", "b"],
+        ["E", "F"],
+        [["k"], ["M"]],
+    )
+
+    assert isinstance(df.co_["A", "C", "E"], pd.Series)
+
+    assert vin(df.co_["A", "C", "E"]) == ([1, 9], ["a", "b"], ("A", "C", "E"))
+
+    assert vicn(df.co_[:, "C", :]) == (
+        [[1, 2, 5, 6], [9, 10, 13, 14]],
+        ["a", "b"],
+        [("A", "E"), ("A", "F"), ("B", "E"), ("B", "F")],
+        [["k"], ["K", "M"]],
+    )
+
+    assert vicn(df.co_[:, "C", "A":"Z"]) == (
+        [[1, 2, 5, 6], [9, 10, 13, 14]],
+        ["a", "b"],
+        [("A", "E"), ("A", "F"), ("B", "E"), ("B", "F")],
+        [["k"], ["K", "M"]],
+    )
+
+    assert vicn(df.co_[:, "C", "A":"E"]) == (
+        [[1, 5], [9, 13]],
+        ["a", "b"],
+        [("A", "E"), ("B", "E")],
+        [["k"], ["K", "M"]],
+    )
+
+    assert vicn(df.co_[:, :, :]) == vicn(df)
 
 
 if __name__ == "__main__":

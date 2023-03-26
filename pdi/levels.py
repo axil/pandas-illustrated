@@ -598,12 +598,16 @@ def rename_level(obj, mapping, level_id=None, axis=None, inplace=False):
 
 def minfo(obj, prefix=''):
     if isinstance(obj, pd.DataFrame):
-        print('Columns:')
-        minfo(obj.columns, '  - ')
         print('Index:')
-        minfo(obj.index, '  - ')
+        minfo(obj.index, '  -')
+        print('Columns:')
+        minfo(obj.columns, '  -')
+    elif isinstance(obj, pd.Series):
+        print('Index:')
+        minfo(obj.index, '  -')
     else:
         for i in range(obj.nlevels):
             level = get_level(obj, i)
-            print(prefix + f'{level.name}:', level.nunique(), 'values from', level[0], 'to', level[-1], end='')
+            level_name = f' {level.name}:' if level.name is not None else ''
+            print(prefix + level_name, level.nunique(), 'values from', level[0], 'to', level[-1], end='')
             print(f', dtype={level.dtype}')
