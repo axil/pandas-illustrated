@@ -611,3 +611,20 @@ def minfo(obj, prefix=''):
             level_name = f' {level.name}:' if level.name is not None else ''
             print(prefix + level_name, level.nunique(), 'values from', level[0], 'to', level[-1], end='')
             print(f', dtype={level.dtype}')
+
+
+def unstack(df, src, dst=None, sort=True):
+    df1 = df.unstack(src)
+    if dst is not None:
+        pdi.swap_levels(df1, src, dst, axis=1, inplace=True)
+        if sort:
+            df1.sort_index(axis=1, inplace=True)
+    return df1
+
+def stack(df, src, dst=None, sort=True):
+    df1 = df.stack(src)
+    if dst is not None:
+        pdi.swap_levels(df1, src, dst, axis=0, inplace=True)
+        if sort:
+            df1.sort_index(axis=0, inplace=True)
+    return df1
