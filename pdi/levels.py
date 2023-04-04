@@ -616,7 +616,7 @@ def minfo(obj, prefix=''):
 def unstack(df, src, dst=None, sort=True):
     df1 = df.unstack(src)
     if dst is not None:
-        pdi.swap_levels(df1, src, dst, axis=1, inplace=True)
+        swap_levels(df1, src, dst, axis=1, inplace=True)
         if sort:
             df1.sort_index(axis=1, inplace=True)
     return df1
@@ -624,7 +624,7 @@ def unstack(df, src, dst=None, sort=True):
 def stack(df, src, dst=None, sort=True):
     df1 = df.stack(src)
     if dst is not None:
-        pdi.swap_levels(df1, src, dst, axis=0, inplace=True)
+        swap_levels(df1, src, dst, axis=0, inplace=True)
         if sort:
             df1.sort_index(axis=0, inplace=True)
     return df1

@@ -47,6 +47,8 @@ from .levels import (
     split_level,
     rename_level,
     minfo,
+    stack,
+    unstack,
 )
 
 __all__ = [
